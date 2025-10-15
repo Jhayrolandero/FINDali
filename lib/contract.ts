@@ -1,6 +1,6 @@
 // FindChain Smart Contract Configuration
 // Replace this address with your deployed contract address
-export const FINDCHAIN_CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
+export const FINDCHAIN_CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3" as const;
 
 // Complete FindChain Contract ABI
 export const FINDCHAIN_ABI = [

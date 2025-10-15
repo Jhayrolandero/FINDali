@@ -184,7 +184,7 @@ export default function RegisterDevicePage() {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="category">Device Category</Label>
-                  <Select required value={category} onValueChange={setCategory}>
+                  <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger id="category">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -203,7 +203,7 @@ export default function RegisterDevicePage() {
                   <Input
                     id="brand"
                     placeholder="e.g., Apple, Samsung"
-                    required
+                    
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
                   />
@@ -214,7 +214,7 @@ export default function RegisterDevicePage() {
                   <Input
                     id="model"
                     placeholder="e.g., iPhone 15 Pro"
-                    required
+                    
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
                   />
@@ -331,7 +331,7 @@ export default function RegisterDevicePage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={uploadedImages.length === 0 || !imei || imeiError !== "" || !isConnected}
+                disabled={!imei || imeiError !== "" || !isConnected}
               >
                 {!isConnected ? "Connect Wallet to Continue" : "Continue to Minting"}
               </Button>
