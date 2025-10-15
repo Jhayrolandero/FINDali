@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import WalletComponent from "@/components/ui/walletComponent";
 import { Wallet } from "@coinbase/onchainkit/wallet";
 import { Award, Globe, Lock, MessageSquare, Shield, Zap } from "lucide-react";
 import Link from "next/link";
@@ -7,7 +8,6 @@ import Link from "next/link";
 export default function page() {
   return (
     <div className="min-h-screen">
-      <Wallet />
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />

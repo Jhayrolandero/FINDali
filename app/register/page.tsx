@@ -1,0 +1,394 @@
+"use client";
+
+import type React from "react";
+
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Shield, Upload, X, Info, CheckCircle2, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+export default function RegisterDevicePage() {
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newImages = Array.from(files).map((file) =>
+        URL.createObjectURL(file)
+      );
+      setUploadedImages([...uploadedImages, ...newImages].slice(0, 3));
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Simulate NFT minting
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    setIsSubmitting(false);
+    setStep(3);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-4xl font-bold">Register Your Device</h1>
+          <p className="text-lg text-muted-foreground">
+            Mint your device as an NFT for cryptographic proof of ownership
+          </p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="mx-auto mb-8 max-w-3xl">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  step >= 1
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+                }`}
+              >
+                {step > 1 ? <CheckCircle2 className="h-5 w-5" /> : "1"}
+              </div>
+              <span className="text-xs text-muted-foreground">Device Info</span>
+            </div>
+            <div
+              className={`h-0.5 flex-1 ${
+                step >= 2 ? "bg-primary" : "bg-secondary"
+              }`}
+            />
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  step >= 2
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+                }`}
+              >
+                {step > 2 ? <CheckCircle2 className="h-5 w-5" /> : "2"}
+              </div>
+              <span className="text-xs text-muted-foreground">Mint NFT</span>
+            </div>
+            <div
+              className={`h-0.5 flex-1 ${
+                step >= 3 ? "bg-primary" : "bg-secondary"
+              }`}
+            />
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  step >= 3
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+                }`}
+              >
+                {step > 3 ? <CheckCircle2 className="h-5 w-5" /> : "3"}
+              </div>
+              <span className="text-xs text-muted-foreground">Complete</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 1: Device Information */}
+        {step === 1 && (
+          <Card className="mx-auto max-w-3xl border-border bg-card p-8">
+            <div className="mb-6">
+              <h2 className="mb-2 text-2xl font-bold">Device Information</h2>
+              <p className="text-muted-foreground">
+                Enter your device details to create an NFT
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setStep(2);
+              }}
+              className="space-y-6"
+            >
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Device Category</Label>
+                  <Select required>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="laptop">Laptop</SelectItem>
+                      <SelectItem value="tablet">Tablet</SelectItem>
+                      <SelectItem value="camera">Camera</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="brand">Brand</Label>
+                  <Input
+                    id="brand"
+                    placeholder="e.g., Apple, Samsung"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model</Label>
+                  <Input
+                    id="model"
+                    placeholder="e.g., iPhone 15 Pro"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="color">Color</Label>
+                  <Input id="color" placeholder="e.g., Space Gray" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="imei">IMEI / Serial Number</Label>
+                <Input
+                  id="imei"
+                  placeholder="Enter your device's unique identifier"
+                  required
+                  className="font-mono"
+                />
+                <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
+                  <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  <p className="text-muted-foreground">
+                    Your IMEI will be hashed using keccak256 and stored
+                    on-chain. Only you know the original number, providing
+                    cryptographic proof of ownership.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Add any distinguishing features, scratches, or custom modifications..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Proof Images (1-3 required)</Label>
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {uploadedImages.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={image || "/placeholder.svg"}
+                          alt={`Proof ${index + 1}`}
+                          className="h-32 w-full rounded-lg object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {uploadedImages.length < 3 && (
+                      <label className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-secondary/50 transition-colors hover:bg-secondary">
+                        <Upload className="mb-2 h-6 w-6 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Upload Image
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                    <p className="text-muted-foreground">
+                      Upload photos of receipts, original packaging, or device
+                      settings screens. These prove ownership and prevent
+                      scammers.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={uploadedImages.length === 0}
+              >
+                Continue to Minting
+              </Button>
+            </form>
+          </Card>
+        )}
+
+        {/* Step 2: Mint NFT */}
+        {step === 2 && (
+          <Card className="mx-auto max-w-3xl border-border bg-card p-8">
+            <div className="mb-6">
+              <h2 className="mb-2 text-2xl font-bold">Mint Device NFT</h2>
+              <p className="text-muted-foreground">
+                Review and confirm your device registration
+              </p>
+            </div>
+
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
+                <span className="text-muted-foreground">Blockchain</span>
+                <Badge className="gap-1 bg-primary text-primary-foreground">
+                  <Shield className="h-3 w-3" />
+                  Base (Ethereum L2)
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
+                <span className="text-muted-foreground">Token Standard</span>
+                <span className="font-semibold">ERC-721</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
+                <span className="text-muted-foreground">Estimated Gas Fee</span>
+                <span className="font-semibold">~$0.50</span>
+              </div>
+            </div>
+
+            <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                <Shield className="h-5 w-5 text-primary" />
+                What You Get
+              </h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  Cryptographic proof of ownership stored on blockchain
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  Priority listing if you report the device lost
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  Compatible with OpenSea, Rarible, and all NFT marketplaces
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  Timestamped proof prevents backdating fake claims
+                </li>
+              </ul>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Minting NFT...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-5 w-5" />
+                    Mint Device NFT
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full bg-transparent"
+                onClick={() => setStep(1)}
+              >
+                Back to Edit
+              </Button>
+            </form>
+          </Card>
+        )}
+
+        {/* Step 3: Success */}
+        {step === 3 && (
+          <Card className="mx-auto max-w-3xl border-border bg-card p-8 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/20">
+                <CheckCircle2 className="h-10 w-10 text-accent" />
+              </div>
+            </div>
+            <h2 className="mb-2 text-3xl font-bold">
+              Device Registered Successfully!
+            </h2>
+            <p className="mb-6 text-lg text-muted-foreground">
+              Your device has been minted as an NFT on the Base blockchain
+            </p>
+
+            <div className="mb-8 space-y-3">
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
+                <span className="text-muted-foreground">Token ID</span>
+                <span className="font-mono font-semibold">#12847</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
+                <span className="text-muted-foreground">Transaction Hash</span>
+                <span className="font-mono text-sm text-primary">
+                  0x7a8f...3d2e
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
+                <span className="text-muted-foreground">IMEI Hash</span>
+                <span className="font-mono text-sm">0x9b4c...8f1a</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                size="lg"
+                className="flex-1 gap-2"
+                onClick={() => (window.location.href = "/my-devices")}
+              >
+                View My Devices
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 bg-transparent"
+                onClick={() => setStep(1)}
+              >
+                Register Another Device
+              </Button>
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

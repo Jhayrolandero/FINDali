@@ -4,6 +4,23 @@ import { base } from "wagmi/chains";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import "@coinbase/onchainkit/styles.css";
 
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { baseSepolia } from "wagmi/chains";
+import { coinbaseWallet } from "wagmi/connectors";
+
+const wagmiConfig = createConfig({
+  chains: [baseSepolia],
+  connectors: [
+    coinbaseWallet({
+      appName: "onchainkit",
+    }),
+  ],
+  ssr: true,
+  transports: {
+    [baseSepolia.id]: http(),
+  },
+});
+
 export function RootProvider({ children }: { children: ReactNode }) {
   return (
     <OnchainKitProvider
@@ -19,7 +36,7 @@ export function RootProvider({ children }: { children: ReactNode }) {
         },
       }}
     >
-      {children}
+      <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
     </OnchainKitProvider>
   );
 }

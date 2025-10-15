@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Source_Code_Pro } from "next/font/google";
 import { RootProvider } from "./rootProvider";
 import "./globals.css";
+import { Navigation } from "@/components/ui/navigation";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${sourceCodePro.variable}`}>
-        <RootProvider>{children}</RootProvider>
+        <RootProvider>
+          <Navigation />
+          {children}
+        </RootProvider>
       </body>
     </html>
   );
