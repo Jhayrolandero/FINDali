@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,35 +15,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Shield, Upload, X, Info, CheckCircle2, Loader2 } from "lucide-react";
+import { Shield, Upload, X, Info, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAccount } from "wagmi";
+import { useMintDevice, useCheckIMEI } from "@/lib/hooks";
+import { validateIMEI, createProofHash, getBlockExplorerUrl } from "@/lib/helpers";
 
 export default function RegisterDevicePage() {
+  const { address, isConnected } = useAccount();
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  
+  // Form data
+  const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [color, setColor] = useState("");
+  const [imei, setImei] = useState("");
+  const [description, setDescription] = useState("");
+  const [imeiError, setImeiError] = useState("");
+  
+  // Contract hooks
+  const { mintDevice, isPending, isConfirming, isConfirmed, hash, error } = useMintDevice();
+  const { isRegistered, isLoading: checkingIMEI } = useCheckIMEI(imei.length === 15 ? imei : undefined);
+
+  // Check IMEI validity
+  useEffect(() => {
+    if (imei.length === 15) {
+      if (!validateIMEI(imei)) {
+        setImeiError("Invalid IMEI format");
+      } else if (isRegistered) {
+        setImeiError("This IMEI is already registered");
+      } else {
+        setImeiError("");
+      }
+    } else if (imei.length > 0) {
+      setImeiError("IMEI must be 15 digits");
+    } else {
+      setImeiError("");
+    }
+  }, [imei, isRegistered]);
+
+  // Auto-advance to success step when minting is confirmed
+  useEffect(() => {
+    if (isConfirmed && step === 2) {
+      setStep(3);
+    }
+  }, [isConfirmed, step]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newImages = Array.from(files).map((file) =>
-        URL.createObjectURL(file)
-      );
+      const newFiles = Array.from(files);
+      const newImages = newFiles.map((file) => URL.createObjectURL(file));
       setUploadedImages([...uploadedImages, ...newImages].slice(0, 3));
+      setUploadedFiles([...uploadedFiles, ...newFiles].slice(0, 3));
     }
   };
 
   const removeImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    // Simulate NFT minting
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    setIsSubmitting(false);
-    setStep(3);
+    
+    if (!isConnected) {
+      alert("Please connect your wallet first");
+      return;
+    }
+
+    if (imeiError) {
+      alert("Please fix the IMEI error before continuing");
+      return;
+    }
+
+    try {
+      // Mint the device NFT
+      mintDevice(imei);
+    } catch (err) {
+      console.error("Error minting device:", err);
+      alert(err instanceof Error ? err.message : "Failed to mint device NFT");
+    }
   };
 
   return (
@@ -129,7 +184,7 @@ export default function RegisterDevicePage() {
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="category">Device Category</Label>
-                  <Select required>
+                  <Select required value={category} onValueChange={setCategory}>
                     <SelectTrigger id="category">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -149,6 +204,8 @@ export default function RegisterDevicePage() {
                     id="brand"
                     placeholder="e.g., Apple, Samsung"
                     required
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
                   />
                 </div>
 
@@ -158,12 +215,19 @@ export default function RegisterDevicePage() {
                     id="model"
                     placeholder="e.g., iPhone 15 Pro"
                     required
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="color">Color</Label>
-                  <Input id="color" placeholder="e.g., Space Gray" />
+                  <Input 
+                    id="color" 
+                    placeholder="e.g., Space Gray"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -171,10 +235,31 @@ export default function RegisterDevicePage() {
                 <Label htmlFor="imei">IMEI / Serial Number</Label>
                 <Input
                   id="imei"
-                  placeholder="Enter your device's unique identifier"
+                  placeholder="Enter 15-digit IMEI"
                   required
                   className="font-mono"
+                  value={imei}
+                  onChange={(e) => setImei(e.target.value.replace(/\D/g, "").slice(0, 15))}
+                  maxLength={15}
                 />
+                {imeiError && (
+                  <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                    <p className="text-destructive">{imeiError}</p>
+                  </div>
+                )}
+                {checkingIMEI && (
+                  <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
+                    <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
+                    <p className="text-muted-foreground">Checking IMEI availability...</p>
+                  </div>
+                )}
+                {!imeiError && !checkingIMEI && imei.length === 15 && (
+                  <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                    <p className="text-accent">IMEI is available</p>
+                  </div>
+                )}
                 <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                   <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   <p className="text-muted-foreground">
@@ -191,6 +276,8 @@ export default function RegisterDevicePage() {
                   id="description"
                   placeholder="Add any distinguishing features, scratches, or custom modifications..."
                   rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
 
@@ -244,9 +331,9 @@ export default function RegisterDevicePage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={uploadedImages.length === 0}
+                disabled={uploadedImages.length === 0 || !imei || imeiError !== "" || !isConnected}
               >
-                Continue to Minting
+                {!isConnected ? "Connect Wallet to Continue" : "Continue to Minting"}
               </Button>
             </form>
           </Card>
@@ -306,16 +393,50 @@ export default function RegisterDevicePage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                  <div>
+                    <p className="font-semibold text-destructive">Error minting NFT</p>
+                    <p className="text-destructive/80">{error.message}</p>
+                  </div>
+                </div>
+              )}
+              
+              {isPending && (
+                <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
+                  <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
+                  <p className="text-muted-foreground">Waiting for wallet confirmation...</p>
+                </div>
+              )}
+              
+              {isConfirming && hash && (
+                <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
+                  <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
+                  <div>
+                    <p className="text-muted-foreground">Transaction submitted! Waiting for confirmation...</p>
+                    <a 
+                      href={getBlockExplorerUrl(hash)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View on BaseScan
+                    </a>
+                  </div>
+                </div>
+              )}
+
               <Button
                 type="submit"
                 size="lg"
                 className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isSubmitting}
+                disabled={isPending || isConfirming}
               >
-                {isSubmitting ? (
+                {isPending || isConfirming ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Minting NFT...
+                    {isPending ? "Confirm in Wallet..." : "Minting NFT..."}
                   </>
                 ) : (
                   <>
@@ -330,6 +451,7 @@ export default function RegisterDevicePage() {
                 size="lg"
                 className="w-full bg-transparent"
                 onClick={() => setStep(1)}
+                disabled={isPending || isConfirming}
               >
                 Back to Edit
               </Button>
@@ -354,18 +476,25 @@ export default function RegisterDevicePage() {
 
             <div className="mb-8 space-y-3">
               <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Token ID</span>
-                <span className="font-mono font-semibold">#12847</span>
+                <span className="text-muted-foreground">Device</span>
+                <span className="font-semibold">{brand} {model}</span>
               </div>
+              {hash && (
+                <div className="flex flex-col gap-2 rounded-lg bg-secondary p-4">
+                  <span className="text-muted-foreground">Transaction Hash</span>
+                  <a 
+                    href={getBlockExplorerUrl(hash)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="font-mono text-sm text-primary hover:underline break-all"
+                  >
+                    {hash}
+                  </a>
+                </div>
+              )}
               <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Transaction Hash</span>
-                <span className="font-mono text-sm text-primary">
-                  0x7a8f...3d2e
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">IMEI Hash</span>
-                <span className="font-mono text-sm">0x9b4c...8f1a</span>
+                <span className="text-muted-foreground">Blockchain</span>
+                <span className="font-semibold">Base Sepolia</span>
               </div>
             </div>
 
@@ -381,7 +510,17 @@ export default function RegisterDevicePage() {
                 size="lg"
                 variant="outline"
                 className="flex-1 bg-transparent"
-                onClick={() => setStep(1)}
+                onClick={() => {
+                  setStep(1);
+                  setImei("");
+                  setBrand("");
+                  setModel("");
+                  setColor("");
+                  setCategory("");
+                  setDescription("");
+                  setUploadedImages([]);
+                  setUploadedFiles([]);
+                }}
               >
                 Register Another Device
               </Button>
