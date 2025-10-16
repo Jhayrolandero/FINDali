@@ -119,7 +119,7 @@ export default function BrowseLostPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-6 flex flex-col gap-4 md:flex-row">
+        <div className="mx-auto mb-6 flex max-w-2xl flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input

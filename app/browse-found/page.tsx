@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Mock images pool
+const mockImages = [
+  "https://powermaccenter.com/cdn/shop/files/iPhone_16_Plus_Pink_PDP_Image_Position_1__en-WW.jpg?v=1726236857&width=823",
+  "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQGiPkM870Z8sCj1b-P0NXwEU8elRWl8UREkSG9x6Z1Y_Eb15s91fXhr6w9JDnEq0XvPNAOazZr_BCwyx3kPQVzWVW75tjPkD__Sr46EmwX8kRfIeP8I0LM2Q",
+  "https://www.apple.com/ph/watch/images/meta/apple-watch__ywfuk5wnf1u2_og.png",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzRMkhGev9ZaPHYLFKlTEWg8kfJGfCmPulXQ&s",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrGEKSqlHRT60y4se5VJai1Qqu54iR-Bba0g&s",
+];
+
+// Helper function to get random images for each item
+const getRandomImages = (itemId: number) => {
+  const count = itemId % 5; // 0-4 images based on item ID
+  const shuffled = [...mockImages].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+};
+
+// Helper function to get random aspect ratio
+const getRandomAspectRatio = (itemId: number) => {
+  const aspectRatios = [
+    "aspect-square",
+    "aspect-[4/3]",
+    "aspect-[3/4]",
+    "aspect-[16/9]",
+  ];
+  return aspectRatios[itemId % aspectRatios.length];
+};
+
 // Mock data for found items
 const mockFoundItems = [
   {
@@ -29,14 +57,14 @@ const mockFoundItems = [
     brand: "Apple",
     model: "iPhone 14 Pro",
     category: "Phone",
-    location: "Central Park, NY",
+    location: "BGC, Taguig City",
     foundDate: "3 hours ago",
-    finderAddress: "0x7890...abcd",
-    finderENS: "goodsamaritan.eth",
+    finderAddress: "0x1234...abcd",
+    finderENS: "alexchen.eth",
     finderReputation: 92,
     finderReturns: 12,
     description:
-      "Found near Bethesda Fountain. Rose gold color with cracked screen protector.",
+      "Found near High Street. Rose gold color with cracked screen protector.",
     hasImage: true,
     pointsReward: 150,
   },
@@ -45,14 +73,13 @@ const mockFoundItems = [
     brand: "Samsung",
     model: "Galaxy Buds Pro",
     category: "Other",
-    location: "LAX Airport, CA",
+    location: "NAIA Terminal 3, Pasay",
     foundDate: "1 day ago",
-    finderAddress: "0xdef0...5678",
-    finderENS: null,
-    finderReputation: 68,
-    finderReturns: 5,
-    description:
-      "Found in Terminal 3 near Gate 42. Black case with charging cable.",
+    finderAddress: "0x1234...abcd",
+    finderENS: "alexchen.eth",
+    finderReputation: 92,
+    finderReturns: 12,
+    description: "Found near Gate 15. Black case with charging cable.",
     hasImage: true,
     pointsReward: 120,
   },
@@ -61,13 +88,13 @@ const mockFoundItems = [
     brand: "Apple",
     model: "AirPods Pro 2",
     category: "Other",
-    location: "Starbucks, Seattle",
+    location: "SM Mall of Asia, Pasay",
     foundDate: "5 hours ago",
-    finderAddress: "0x1111...2222",
-    finderENS: "finder.eth",
-    finderReputation: 85,
-    finderReturns: 8,
-    description: "Left on table near window. White case with some scratches.",
+    finderAddress: "0x1234...abcd",
+    finderENS: "alexchen.eth",
+    finderReputation: 92,
+    finderReturns: 12,
+    description: "Left on food court table. White case with some scratches.",
     hasImage: true,
     pointsReward: 130,
   },
@@ -76,13 +103,14 @@ const mockFoundItems = [
     brand: "Dell",
     model: "XPS 13 Laptop",
     category: "Laptop",
-    location: "Library, Boston",
+    location: "UP Diliman, Quezon City",
     foundDate: "2 days ago",
-    finderAddress: "0x3333...4444",
-    finderENS: null,
-    finderReputation: 45,
-    finderReturns: 2,
-    description: "Found in study room. Silver laptop with university stickers.",
+    finderAddress: "0x1234...abcd",
+    finderENS: "alexchen.eth",
+    finderReputation: 92,
+    finderReturns: 12,
+    description:
+      "Found in Main Library study area. Silver laptop with university stickers.",
     hasImage: true,
     pointsReward: 180,
   },
@@ -91,13 +119,13 @@ const mockFoundItems = [
     brand: "Canon",
     model: "EOS R6 Camera",
     category: "Camera",
-    location: "Golden Gate Bridge, SF",
+    location: "Rizal Park, Manila",
     foundDate: "6 hours ago",
-    finderAddress: "0x5555...7777",
-    finderENS: "helper.eth",
-    finderReputation: 78,
-    finderReturns: 6,
-    description: "Professional camera with lens. Found near visitor center.",
+    finderAddress: "0x1234...abcd",
+    finderENS: "alexchen.eth",
+    finderReputation: 92,
+    finderReturns: 12,
+    description: "Professional camera with lens. Found near Rizal Monument.",
     hasImage: true,
     pointsReward: 200,
   },
@@ -120,9 +148,9 @@ export default function BrowseFoundPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-1">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="mb-2 text-4xl font-bold">Browse Found Items</h1>
           <p className="text-lg text-muted-foreground">
             Community members have found these items. Claim yours and help
@@ -131,7 +159,7 @@ export default function BrowseFoundPage() {
         </div>
 
         {/* Info Banner */}
-        <Card className="mb-8 border-primary/20 bg-primary/5 p-4">
+        <Card className="mx-auto mb-6 max-w-2xl border-primary/20 bg-primary/5 p-4">
           <div className="flex items-start gap-3">
             <Award className="mt-0.5 h-5 w-5 text-primary" />
             <div>
@@ -146,7 +174,7 @@ export default function BrowseFoundPage() {
         </Card>
 
         {/* Search and Filters */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row">
+        <div className="mx-auto mb-6 flex max-w-2xl flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -182,134 +210,186 @@ export default function BrowseFoundPage() {
           </Select>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-muted-foreground">
-          Showing {mockFoundItems.length} found items
-        </div>
-
         {/* Found Items Listings */}
-        <div className="grid gap-6">
-          {mockFoundItems.map((item) => {
-            const trustLevel = getTrustLevel(item.finderReputation);
-            return (
-              <Card
-                key={item.id}
-                className="border-border bg-card p-4 transition-all hover:border-accent/50"
-              >
-                <div className="flex flex-col gap-3 lg:flex-row">
-                  {/* Item Image Placeholder */}
-                  <div className="flex h-40 w-full items-center justify-center rounded-lg bg-secondary lg:h-auto lg:w-40">
-                    <img
-                      src={`/.jpg?height=200&width=200&query=${item.brand} ${item.model} found item`}
-                      alt={`${item.brand} ${item.model}`}
-                      className="h-full w-full rounded-lg object-cover"
-                    />
-                  </div>
-
-                  {/* Item Details */}
-                  <div className="flex-1">
-                    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <h3 className="text-xl font-bold">
-                            {item.brand} {item.model}
-                          </h3>
-                          <Badge className="gap-1 bg-accent text-accent-foreground text-xs">
-                            <PackageOpen className="h-3 w-3" />
-                            Found Item
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {item.location}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {item.foundDate}
-                          </span>
-                        </div>
+        <div className="mx-auto max-w-2xl">
+          <div className="grid gap-4">
+            {mockFoundItems.map((item) => {
+              const trustLevel = getTrustLevel(item.finderReputation);
+              return (
+                <Card
+                  key={item.id}
+                  className="border-border bg-card overflow-hidden transition-all hover:border-accent/50 py-1"
+                >
+                  {/* Minimalistic Header */}
+                  <div className="flex items-center justify-between border-b border-border/50 px-4 py-2.5">
+                    <Link
+                      href={`/user-profile/${item.finderAddress}`}
+                      className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                    >
+                      <div className="flex size-10 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
+                        {(item.finderENS || item.finderAddress)
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
-                      {/* <div className="text-right">
-                        <div className="mb-1 flex items-center gap-2 text-2xl font-bold text-accent">
-                          <Award className="h-6 w-6" />
-                          {item.pointsReward}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base font-semibold text-foreground hover:text-primary transition-colors">
+                            {item.finderENS || item.finderAddress}
+                          </span>
+                          {item.finderReputation >= 80 && (
+                            <Award className="h-3.5 w-3.5 text-accent" />
+                          )}
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          Points Reward
+                          {item.foundDate}
                         </span>
-                      </div> */}
+                      </div>
+                    </Link>
+
+                    <Badge className={`${trustLevel.color} text-xs px-2 py-1`}>
+                      {trustLevel.label}
+                    </Badge>
+                  </div>
+
+                  {/* Device Images Collage */}
+                  {(() => {
+                    const images = getRandomImages(item.id);
+                    const imageCount = images.length;
+                    const aspectRatio = getRandomAspectRatio(item.id);
+
+                    if (imageCount === 0) return null;
+
+                    if (imageCount === 1) {
+                      return (
+                        <div
+                          className={`relative ${aspectRatio} w-full overflow-hidden bg-gradient-to-br from-secondary/20 to-primary/10`}
+                        >
+                          <img
+                            src={images[0]}
+                            alt={`${item.brand} ${item.model}`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      );
+                    }
+
+                    if (imageCount === 2) {
+                      return (
+                        <div
+                          className={`grid ${aspectRatio} w-full grid-cols-2 gap-1 overflow-hidden`}
+                        >
+                          {images.map((img, idx) => (
+                            <div
+                              key={idx}
+                              className="relative overflow-hidden bg-gradient-to-br from-secondary/20 to-primary/10"
+                            >
+                              <img
+                                src={img}
+                                alt={`${item.brand} ${item.model} - ${idx + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    if (imageCount === 3) {
+                      return (
+                        <div
+                          className={`grid ${aspectRatio} w-full grid-cols-2 gap-1 overflow-hidden`}
+                        >
+                          <div className="relative col-span-2 overflow-hidden bg-gradient-to-br from-secondary/20 to-primary/10">
+                            <img
+                              src={images[0]}
+                              alt={`${item.brand} ${item.model} - 1`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          {images.slice(1).map((img, idx) => (
+                            <div
+                              key={idx}
+                              className="relative overflow-hidden bg-gradient-to-br from-secondary/20 to-primary/10"
+                            >
+                              <img
+                                src={img}
+                                alt={`${item.brand} ${item.model} - ${idx + 2}`}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    // 4 images - 2x2 grid
+                    return (
+                      <div
+                        className={`grid ${aspectRatio} w-full grid-cols-2 gap-1 overflow-hidden`}
+                      >
+                        {images.map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="relative overflow-hidden bg-gradient-to-br from-secondary/20 to-primary/10"
+                          >
+                            <img
+                              src={img}
+                              alt={`${item.brand} ${item.model} - ${idx + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <h3 className="text-base font-semibold text-foreground">
+                        {item.brand} {item.model}
+                      </h3>
+                      <Badge className="gap-1 bg-accent text-accent-foreground text-xs px-1.5 py-0">
+                        <PackageOpen className="h-3 w-3" />
+                        Found
+                      </Badge>
                     </div>
 
-                    <p className="mb-3 text-sm text-muted-foreground">
+                    <div className="mb-2.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{item.location}</span>
+                    </div>
+
+                    <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
                       {item.description}
                     </p>
 
-                    {/* Finder Profile Section - Social Media Style */}
-                    <div className="flex items-center gap-2 rounded-lg border border-border bg-card/50 p-2">
-                      {/* Profile Picture */}
-                      <div className="relative">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-sm font-bold text-primary">
-                          {(item.finderENS || item.finderAddress)
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
-                        {/* Trust Badge Overlay */}
-                        {item.finderReputation >= 80 && (
-                          <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent border-2 border-background">
-                            <Award className="h-2.5 w-2.5 text-accent-foreground" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Finder Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-semibold text-foreground truncate">
-                            {item.finderENS || item.finderAddress}
-                          </span>
-                          <Badge
-                            className={`${trustLevel.color} text-xs px-1.5 py-0`}
-                          >
-                            {trustLevel.label}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-0.5">
-                            <Award className="h-2.5 w-2.5" />
-                            {item.finderReturns} Returns
-                          </span>
-                          <span>•</span>
-                          <span>{item.finderReputation}% Trust</span>
-                        </div>
-                      </div>
-
-                      {/* Contact Button */}
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs px-3"
+                        className="h-9 flex-1 gap-1.5 bg-accent text-sm text-accent-foreground hover:bg-accent/90"
                       >
-                        <MessageSquare className="h-3 w-3" />
+                        <MessageSquare className="h-4 w-4" />
                         Contact
                       </Button>
-                    </div>
-
-                    {/* <div className="flex flex-wrap gap-3">
-                      <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
-                        <MessageSquare className="h-4 w-4" />
-                        Contact Finder
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 flex-1 gap-1.5 text-sm"
+                      >
+                        Claim
                       </Button>
-                      {/* <Button variant="outline">Claim This Item</Button> */}
-                    {/* </div> */}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            );
-          })}
+                </Card>
+              );
+            })}
+          </div>
         </div>
 
         {/* Post Found Item CTA */}
-        <Card className="mt-8 border-accent/20 bg-accent/5 p-8 text-center">
+        <Card className="mx-auto mt-6 max-w-2xl border-accent/20 bg-accent/5 p-8 text-center">
           <PackageOpen className="mx-auto mb-4 h-12 w-12 text-accent" />
           <h3 className="mb-2 text-2xl font-bold">Found Something?</h3>
           <p className="mb-4 text-muted-foreground">

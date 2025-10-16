@@ -24,6 +24,8 @@ import {
   Bell,
   Lock,
   ExternalLink,
+  Twitter,
+  Send,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -37,8 +39,8 @@ const initialUserData = {
   // Profile Info
   displayName: "Alice Johnson",
   email: "alice@example.com",
-  phone: "+1 234 567 8900",
-  location: "San Francisco, CA",
+  phone: "+63 917 123 4567",
+  location: "Makati City, Metro Manila",
   bio: "Passionate about helping others find their lost items. Community contributor since 2024.",
 
   // Account Stats
@@ -127,59 +129,53 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold">My Profile</h1>
-          <p className="text-lg text-muted-foreground">
-            Manage your account information and settings
-          </p>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-3">
+      <div className="container mx-auto px-4 py-1">
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - Profile Info */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-4 lg:col-span-2">
             {/* Profile Card */}
-            <Card className="border-border bg-card p-6">
-              <div className="mb-6 flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/20 text-3xl font-bold text-primary">
-                    {userData.displayName.charAt(0)}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {userData.displayName}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      @{userData.ens}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge variant="outline" className="gap-1">
-                        <Trophy className="h-3 w-3" />
-                        {userData.currentLevel}
-                      </Badge>
-                      <Badge variant="outline" className="gap-1">
-                        <Star className="h-3 w-3" />
-                        {userData.reputation} Rep
-                      </Badge>
+            <Card className="border-border bg-card overflow-hidden">
+              <div className="border-b border-border/50 px-4 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 text-2xl font-bold text-primary">
+                      {userData.displayName.charAt(0)}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">
+                        {userData.displayName}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        @{userData.ens}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <Badge className="gap-1 bg-accent text-accent-foreground text-xs px-1.5 py-0">
+                          <Trophy className="h-3 w-3" />
+                          {userData.currentLevel}
+                        </Badge>
+                        <Badge className="gap-1 bg-primary/20 text-primary text-xs px-1.5 py-0">
+                          <Star className="h-3 w-3" />
+                          {userData.reputation}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
+                  {!isEditing && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="gap-1.5 h-9"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
                 </div>
-                {!isEditing && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Profile
-                  </Button>
-                )}
               </div>
 
               {/* Profile Details */}
-              <div className="space-y-4">
+              <div className="p-4">
                 {isEditing ? (
                   <>
                     {/* Edit Mode */}
@@ -270,66 +266,132 @@ export default function ProfilePage() {
                   </>
                 ) : (
                   <>
-                    {/* View Mode */}
-                    <div className="flex items-start gap-3">
-                      <Mail className="mt-1 h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">Email</p>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{userData.email}</p>
-                          {userData.emailVerified && (
-                            <Badge className="gap-1 bg-green-500 text-white">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Verified
-                            </Badge>
-                          )}
+                    {/* View Mode - Contact Info */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <Mail className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">Email</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">
+                              {userData.email}
+                            </p>
+                            {userData.emailVerified && (
+                              <Badge className="gap-1 bg-green-500 text-white text-xs px-1.5 py-0">
+                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Phone className="mt-1 h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">Phone</p>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{userData.phone}</p>
-                          {!userData.phoneVerified && (
-                            <Button
-                              variant="link"
-                              className="h-auto p-0 text-xs"
-                            >
-                              Verify
-                            </Button>
-                          )}
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                          <Phone className="h-5 w-5 text-accent" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">Phone</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">
+                              {userData.phone}
+                            </p>
+                            {!userData.phoneVerified && (
+                              <Button
+                                variant="link"
+                                className="h-auto p-0 text-xs text-primary"
+                              >
+                                Verify
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <MapPin className="mt-1 h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">
-                          Location
-                        </p>
-                        <p className="font-medium">{userData.location}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/50">
+                          <MapPin className="h-5 w-5 text-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">
+                            Location
+                          </p>
+                          <p className="text-sm font-medium">
+                            {userData.location}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Calendar className="mt-1 h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">
-                          Member Since
-                        </p>
-                        <p className="font-medium">{userData.memberSince}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <User className="mt-1 h-5 w-5 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">Bio</p>
-                        <p className="font-medium">{userData.bio}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                          <Calendar className="h-5 w-5 text-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground">
+                            Member Since
+                          </p>
+                          <p className="text-sm font-medium">
+                            {userData.memberSince}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </>
                 )}
+              </div>
+            </Card>
+
+            {/* Bio Section */}
+            <Card className="border-border bg-card overflow-hidden">
+              <div className="border-b border-border/50 px-4 py-3">
+                <h3 className="flex items-center gap-2 text-base font-bold">
+                  <User className="h-4 w-4 text-primary" />
+                  About
+                </h3>
+              </div>
+              <div className="p-4">
+                <p className="text-sm leading-relaxed text-foreground">
+                  {userData.bio}
+                </p>
+              </div>
+            </Card>
+
+            {/* Social Links Section */}
+            <Card className="border-border bg-card overflow-hidden">
+              <div className="border-b border-border/50 px-4 py-3">
+                <h3 className="flex items-center gap-2 text-base font-bold">
+                  <Globe className="h-4 w-4 text-primary" />
+                  Social Links
+                </h3>
+              </div>
+              <div className="p-4 space-y-3">
+                <a
+                  href="https://twitter.com/alexchenph"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
+                    <Twitter className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Twitter</p>
+                    <p className="text-sm font-medium">@alexchenph</p>
+                  </div>
+                </a>
+                <a
+                  href="https://t.me/alexchenmanila"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-400/10">
+                    <Send className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Telegram</p>
+                    <p className="text-sm font-medium">@alexchenmanila</p>
+                  </div>
+                </a>
               </div>
             </Card>
 
