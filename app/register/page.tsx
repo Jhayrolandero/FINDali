@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +35,68 @@ export default function RegisterDevicePage() {
   const [imei, setImei] = useState("");
   const [description, setDescription] = useState("");
   const [imeiError, setImeiError] = useState("");
+  const [isFetchingDeviceInfo, setIsFetchingDeviceInfo] = useState(false);
+  const [deviceInfoError, setDeviceInfoError] = useState("");
   
   // Contract hooks
   const { mintDevice, isPending, isConfirming, isConfirmed, hash, error } = useMintDevice();
   const { isRegistered, isLoading: checkingIMEI } = useCheckIMEI(imei.length === 15 ? imei : undefined);
+
+  // Fetch device info from IMEI API with debounce
+  const fetchDeviceInfo = useCallback(async (imeiValue: string) => {
+    if (imeiValue.length !== 15) return;
+    
+    setIsFetchingDeviceInfo(true);
+    setDeviceInfoError("");
+
+    try {
+      const response = await fetch(`/api/device-info?imei=${imeiValue}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 404) {
+          setDeviceInfoError("Device not found in database. Please fill details manually.");
+        } else {
+          setDeviceInfoError(errorData.error || "Failed to fetch device info");
+        }
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Auto-fill form fields
+      setBrand(data.brand || "");
+      setModel(data.modelName || "");
+      
+      // Try to guess category from model name
+      const modelLower = (data.modelName || "").toLowerCase();
+      if (modelLower.includes("iphone") || modelLower.includes("galaxy") || modelLower.includes("pixel")) {
+        setCategory("phone");
+      } else if (modelLower.includes("macbook") || modelLower.includes("laptop") || modelLower.includes("thinkpad")) {
+        setCategory("laptop");
+      } else if (modelLower.includes("ipad") || modelLower.includes("tablet")) {
+        setCategory("tablet");
+      }
+      
+      console.log("Auto-filled device info:", data);
+    } catch (err) {
+      console.error("Error fetching device info:", err);
+      setDeviceInfoError("Failed to fetch device info. Please fill details manually.");
+    } finally {
+      setIsFetchingDeviceInfo(false);
+    }
+  }, []);
+
+  // Debounced IMEI lookup
+  useEffect(() => {
+    if (imei.length === 15 && validateIMEI(imei) && !isRegistered) {
+      const timeoutId = setTimeout(() => {
+        fetchDeviceInfo(imei);
+      }, 500); // 500ms debounce
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [imei, isRegistered, fetchDeviceInfo]);
 
   // Check IMEI validity
   useEffect(() => {
@@ -248,16 +306,26 @@ export default function RegisterDevicePage() {
                     <p className="text-destructive">{imeiError}</p>
                   </div>
                 )}
-                {checkingIMEI && (
+                {(checkingIMEI || isFetchingDeviceInfo) && (
                   <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                     <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
-                    <p className="text-muted-foreground">Checking IMEI availability...</p>
+                    <p className="text-muted-foreground">
+                      {checkingIMEI ? "Checking IMEI availability..." : "Fetching device information..."}
+                    </p>
                   </div>
                 )}
-                {!imeiError && !checkingIMEI && imei.length === 15 && (
+                {deviceInfoError && (
+                  <div className="flex items-start gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-600" />
+                    <p className="text-yellow-700 dark:text-yellow-500">{deviceInfoError}</p>
+                  </div>
+                )}
+                {!imeiError && !checkingIMEI && !isFetchingDeviceInfo && imei.length === 15 && (
                   <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
-                    <p className="text-accent">IMEI is available</p>
+                    <p className="text-accent">
+                      IMEI is available{brand && ` • Auto-filled ${brand} ${model}`}
+                    </p>
                   </div>
                 )}
                 <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
