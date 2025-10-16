@@ -239,57 +239,7 @@ export default function RegisterDevicePage() {
               }}
               className="space-y-6"
             >
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Device Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="phone">Phone</SelectItem>
-                      <SelectItem value="laptop">Laptop</SelectItem>
-                      <SelectItem value="tablet">Tablet</SelectItem>
-                      <SelectItem value="camera">Camera</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="brand">Brand</Label>
-                  <Input
-                    id="brand"
-                    placeholder="e.g., Apple, Samsung"
-                    
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="model">Model</Label>
-                  <Input
-                    id="model"
-                    placeholder="e.g., iPhone 15 Pro"
-                    
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="color">Color</Label>
-                  <Input 
-                    id="color" 
-                    placeholder="e.g., Space Gray"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
+              <div className="space-y-2 text-black">
                 <Label htmlFor="imei">IMEI / Serial Number</Label>
                 <Input
                   id="imei"
@@ -321,10 +271,10 @@ export default function RegisterDevicePage() {
                   </div>
                 )}
                 {!imeiError && !checkingIMEI && !isFetchingDeviceInfo && imei.length === 15 && (
-                  <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
-                    <p className="text-accent">
-                      IMEI is available{brand && ` • Auto-filled ${brand} ${model}`}
+                  <div className="text-black flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-black" />
+                    <p>
+                      IMEI is available{brand && ` • Device information detected`}
                     </p>
                   </div>
                 )}
@@ -337,6 +287,38 @@ export default function RegisterDevicePage() {
                   </p>
                 </div>
               </div>
+
+              {/* Device Information Display - Only shown when detected */}
+              {brand && model && !isFetchingDeviceInfo && (
+                <div className="space-y-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    Device Information Detected
+                  </h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {category && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Category</p>
+                        <p className="text-base font-medium capitalize">{category}</p>
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Brand</p>
+                      <p className="text-base font-medium">{brand}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Model</p>
+                      <p className="text-base font-medium">{model}</p>
+                    </div>
+                    {color && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Color</p>
+                        <p className="text-base font-medium">{color}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description (Optional)</Label>
@@ -385,7 +367,7 @@ export default function RegisterDevicePage() {
                     )}
                   </div>
                   <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
-                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-black" />
                     <p className="text-muted-foreground">
                       Upload photos of receipts, original packaging, or device
                       settings screens. These prove ownership and prevent
@@ -399,9 +381,13 @@ export default function RegisterDevicePage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={!imei || imeiError !== "" || !isConnected}
+                disabled={!imei || imeiError !== "" || !isConnected || uploadedImages.length === 0}
               >
-                {!isConnected ? "Connect Wallet to Continue" : "Continue to Minting"}
+                {!isConnected 
+                  ? "Connect Wallet to Continue" 
+                  : uploadedImages.length === 0 
+                  ? "Upload at least 1 proof image" 
+                  : "Continue to Minting"}
               </Button>
             </form>
           </Card>
@@ -532,7 +518,7 @@ export default function RegisterDevicePage() {
           <Card className="mx-auto max-w-3xl border-border bg-card p-8 text-center">
             <div className="mb-6 flex justify-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/20">
-                <CheckCircle2 className="h-10 w-10 text-accent" />
+                <CheckCircle2 className="h-10 w-10 text-black" />
               </div>
             </div>
             <h2 className="mb-2 text-3xl font-bold">
