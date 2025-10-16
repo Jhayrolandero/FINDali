@@ -1,6 +1,8 @@
 // FindChain Smart Contract Configuration
 // Replace this address with your deployed contract address
-export const FINDCHAIN_CONTRACT_ADDRESS = "0xCcF255150E90a206EfCAebAC37a04C223232401b" as const;
+export const FINDCHAIN_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_FINDCHAIN_CONTRACT_ADDRESS ||
+  "0xYourContractAddressHere";
 
 // Complete FindChain Contract ABI
 export const FINDCHAIN_ABI = [
@@ -63,7 +65,9 @@ export const FINDCHAIN_ABI = [
   },
   // Open Bounty Functions
   {
-    inputs: [{ internalType: "string", name: "deviceDescription", type: "string" }],
+    inputs: [
+      { internalType: "string", name: "deviceDescription", type: "string" },
+    ],
     name: "createOpenBounty",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "payable",
@@ -299,9 +303,19 @@ export const FINDCHAIN_ABI = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
       { indexed: false, internalType: "string", name: "imei", type: "string" },
-      { indexed: true, internalType: "address", name: "owner", type: "address" },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
     ],
     name: "DeviceMinted",
     type: "event",
@@ -309,9 +323,24 @@ export const FINDCHAIN_ABI = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: true, internalType: "address", name: "owner", type: "address" },
-      { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
     ],
     name: "BountyCreated",
     type: "event",
@@ -319,9 +348,24 @@ export const FINDCHAIN_ABI = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: "uint256", name: "claimId", type: "uint256" },
-      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: true, internalType: "address", name: "finder", type: "address" },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "claimId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "finder",
+        type: "address",
+      },
     ],
     name: "ClaimSubmitted",
     type: "event",
@@ -329,10 +373,30 @@ export const FINDCHAIN_ABI = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: "uint256", name: "bountyId", type: "uint256" },
-      { indexed: true, internalType: "address", name: "owner", type: "address" },
-      { indexed: false, internalType: "uint256", name: "amount", type: "uint256" },
-      { indexed: false, internalType: "string", name: "description", type: "string" },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "bountyId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "description",
+        type: "string",
+      },
     ],
     name: "OpenBountyCreated",
     type: "event",
@@ -340,12 +404,26 @@ export const FINDCHAIN_ABI = [
   {
     anonymous: false,
     inputs: [
-      { indexed: true, internalType: "uint256", name: "listingId", type: "uint256" },
-      { indexed: true, internalType: "address", name: "finder", type: "address" },
-      { indexed: false, internalType: "string", name: "description", type: "string" },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "listingId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "finder",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "description",
+        type: "string",
+      },
     ],
     name: "FoundListingCreated",
     type: "event",
   },
 ] as const;
-

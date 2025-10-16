@@ -5,6 +5,23 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract FindChain is ERC721, Ownable {
+    // Custom errors (saves gas and bytecode)
+    error NotDeviceOwner();
+    error InvalidAmount();
+    error BountyNotActive();
+    error BountyAlreadyActive();
+    error ProofRequired();
+    error NotBountyOwner();
+    error ClaimAlreadyConfirmed();
+    error ClaimAlreadyRejected();
+    error DescriptionRequired();
+    error InvalidIMEI();
+    error IMEIAlreadyRegistered();
+    error ListingNotFound();
+    error NotListingOwner();
+    error ListingAlreadyClaimed();
+    error CannotClaimOwnListing();
+
     // State variables
     uint256 private _nextTokenId;
     uint256 private _nextClaimId;
@@ -119,9 +136,9 @@ contract FindChain is ERC721, Ownable {
 
     // Bounty functions
     function createBounty(uint256 tokenId) public payable {
-        require(_ownerOf(tokenId) == msg.sender, "Not the device owner");
-        require(msg.value > 0, "Bounty amount must be greater than 0");
-        require(!_bounties[tokenId].active, "Bounty already active");
+        if(_ownerOf(tokenId) != msg.sender) revert NotDeviceOwner();
+        if(msg.value == 0) revert InvalidAmount();
+        if(_bounties[tokenId].active) revert BountyAlreadyActive();
 
         _bounties[tokenId] = Bounty({
             amount: msg.value,
@@ -134,8 +151,8 @@ contract FindChain is ERC721, Ownable {
     }
 
     function submitClaim(uint256 tokenId, string memory proofHash) public returns (uint256) {
-        require(_bounties[tokenId].active, "Bounty not active");
-        require(bytes(proofHash).length > 0, "Proof hash required");
+        if(!_bounties[tokenId].active) revert BountyNotActive();
+        if(bytes(proofHash).length == 0) revert ProofRequired();
 
         uint256 claimId = _nextClaimId++;
         
@@ -158,16 +175,14 @@ contract FindChain is ERC721, Ownable {
         Claim storage claim = _claims[claimId];
         Bounty storage bountyData = _bounties[claim.bountyTokenId];
 
-        require(bountyData.active, "Bounty not active");
-        require(bountyData.owner == msg.sender, "Not the bounty owner");
-        require(!claim.confirmed, "Claim already confirmed");
-        require(!claim.rejected, "Claim already rejected");
+        if(!bountyData.active) revert BountyNotActive();
+        if(bountyData.owner != msg.sender) revert NotBountyOwner();
+        if(claim.confirmed) revert ClaimAlreadyConfirmed();
+        if(claim.rejected) revert ClaimAlreadyRejected();
 
         claim.confirmed = true;
         bountyData.active = false;
 
-        // gay if needs gwei
-        // -morgan freeman
         payable(claim.finder).transfer(bountyData.amount);
 
         emit ClaimConfirmed(claimId, claim.bountyTokenId, claim.finder, bountyData.amount);
@@ -177,10 +192,10 @@ contract FindChain is ERC721, Ownable {
         Claim storage claim = _claims[claimId];
         Bounty storage bountyData = _bounties[claim.bountyTokenId];
 
-        require(bountyData.active, "Bounty not active");
-        require(bountyData.owner == msg.sender, "Not the bounty owner");
-        require(!claim.confirmed, "Claim already confirmed");
-        require(!claim.rejected, "Claim already rejected");
+        if(!bountyData.active) revert BountyNotActive();
+        if(bountyData.owner != msg.sender) revert NotBountyOwner();
+        if(claim.confirmed) revert ClaimAlreadyConfirmed();
+        if(claim.rejected) revert ClaimAlreadyRejected();
 
         claim.rejected = true;
 
@@ -190,8 +205,8 @@ contract FindChain is ERC721, Ownable {
     function cancelBounty(uint256 tokenId) public {
         Bounty storage bountyData = _bounties[tokenId];
         
-        require(bountyData.active, "Bounty not active");
-        require(bountyData.owner == msg.sender, "Not the bounty owner");
+        if(!bountyData.active) revert BountyNotActive();
+        if(bountyData.owner != msg.sender) revert NotBountyOwner();
 
         bountyData.active = false;
         payable(bountyData.owner).transfer(bountyData.amount);
@@ -201,8 +216,8 @@ contract FindChain is ERC721, Ownable {
 
     // Open Bounty functions (for devices without NFT)
     function createOpenBounty(string memory deviceDescription) public payable returns (uint256) {
-        require(bytes(deviceDescription).length > 0, "Device description required");
-        require(msg.value > 0, "Bounty amount must be greater than 0");
+        if(bytes(deviceDescription).length == 0) revert DescriptionRequired();
+        if(msg.value == 0) revert InvalidAmount();
 
         uint256 bountyId = _nextOpenBountyId++;
         
@@ -222,8 +237,8 @@ contract FindChain is ERC721, Ownable {
     function cancelOpenBounty(uint256 bountyId) public {
         OpenBounty storage bounty = _openBounties[bountyId];
         
-        require(bounty.active, "Bounty not active");
-        require(bounty.owner == msg.sender, "Not the bounty owner");
+        if(!bounty.active) revert BountyNotActive();
+        if(bounty.owner != msg.sender) revert NotBountyOwner();
 
         bounty.active = false;
         payable(bounty.owner).transfer(bounty.amount);
@@ -233,8 +248,8 @@ contract FindChain is ERC721, Ownable {
 
     // Open Claim functions (for open bounties)
     function submitOpenClaim(uint256 bountyId, string memory proofHash) public returns (uint256) {
-        require(_openBounties[bountyId].active, "Bounty not active");
-        require(bytes(proofHash).length > 0, "Proof hash required");
+        if(!_openBounties[bountyId].active) revert BountyNotActive();
+        if(bytes(proofHash).length == 0) revert ProofRequired();
 
         uint256 claimId = _nextOpenClaimId++;
         
@@ -257,10 +272,10 @@ contract FindChain is ERC721, Ownable {
         OpenClaim storage claim = _openClaims[claimId];
         OpenBounty storage bounty = _openBounties[claim.openBountyId];
 
-        require(bounty.active, "Bounty not active");
-        require(bounty.owner == msg.sender, "Not the bounty owner");
-        require(!claim.confirmed, "Claim already confirmed");
-        require(!claim.rejected, "Claim already rejected");
+        if(!bounty.active) revert BountyNotActive();
+        if(bounty.owner != msg.sender) revert NotBountyOwner();
+        if(claim.confirmed) revert ClaimAlreadyConfirmed();
+        if(claim.rejected) revert ClaimAlreadyRejected();
 
         claim.confirmed = true;
         bounty.active = false;
@@ -274,10 +289,10 @@ contract FindChain is ERC721, Ownable {
         OpenClaim storage claim = _openClaims[claimId];
         OpenBounty storage bounty = _openBounties[claim.openBountyId];
 
-        require(bounty.active, "Bounty not active");
-        require(bounty.owner == msg.sender, "Not the bounty owner");
-        require(!claim.confirmed, "Claim already confirmed");
-        require(!claim.rejected, "Claim already rejected");
+        if(!bounty.active) revert BountyNotActive();
+        if(bounty.owner != msg.sender) revert NotBountyOwner();
+        if(claim.confirmed) revert ClaimAlreadyConfirmed();
+        if(claim.rejected) revert ClaimAlreadyRejected();
 
         claim.rejected = true;
 
@@ -286,8 +301,8 @@ contract FindChain is ERC721, Ownable {
 
     // Found Listing functions (for finders)
     function createFoundListing(string memory deviceDescription, string memory proofHash) public returns (uint256) {
-        require(bytes(deviceDescription).length > 0, "Device description required");
-        require(bytes(proofHash).length > 0, "Proof hash required");
+        if(bytes(deviceDescription).length == 0) revert DescriptionRequired();
+        if(bytes(proofHash).length == 0) revert ProofRequired();
 
         uint256 listingId = _nextFoundListingId++;
         
@@ -309,10 +324,10 @@ contract FindChain is ERC721, Ownable {
     function removeFoundListing(uint256 listingId) public {
         FoundListing storage listing = _foundListings[listingId];
         
-        require(listing.finder == msg.sender, "Not the listing owner");
-        require(!listing.claimed, "Listing already claimed");
+        if(listing.finder != msg.sender) revert NotListingOwner();
+        if(listing.claimed) revert ListingAlreadyClaimed();
 
-        listing.claimed = true;  // Mark as inactive
+        listing.claimed = true;
 
         emit FoundListingRemoved(listingId, msg.sender);
     }
@@ -321,14 +336,13 @@ contract FindChain is ERC721, Ownable {
     function claimFoundListing(uint256 listingId) public payable {
         FoundListing storage listing = _foundListings[listingId];
         
-        require(!listing.claimed, "Listing already claimed");
-        require(msg.sender != listing.finder, "Cannot claim your own listing");
+        if(listing.claimed) revert ListingAlreadyClaimed();
+        if(msg.sender == listing.finder) revert CannotClaimOwnListing();
 
         listing.claimed = true;
         listing.claimedBy = msg.sender;
         listing.rewardAmount = msg.value;
 
-        // Send reward to finder if provided
         if (msg.value > 0) {
             payable(listing.finder).transfer(msg.value);
         }
@@ -337,9 +351,9 @@ contract FindChain is ERC721, Ownable {
     }
 
     // NFT functions
-    function mintDevice(string memory imei) public onlyOwner returns (uint256) {
-        require(bytes(imei).length == 15, "IMEI must be 15 characters long");
-        require(!_imeiRegistered[imei], "IMEI already registered");
+    function mintDevice(string memory imei) public returns (uint256) {
+        if(bytes(imei).length != 15) revert InvalidIMEI();
+        if(_imeiRegistered[imei]) revert IMEIAlreadyRegistered();
 
         uint256 tokenId = _nextTokenId++;
         _safeMint(msg.sender, tokenId);
@@ -351,7 +365,7 @@ contract FindChain is ERC721, Ownable {
     }
 
     function transferDevice(uint256 tokenId, address to) public {
-        require(_ownerOf(tokenId) == msg.sender, "Not the device owner");
+        if(_ownerOf(tokenId) != msg.sender) revert NotDeviceOwner();
         _transfer(msg.sender, to, tokenId);
         emit DeviceTransferred(tokenId, msg.sender, to);
     }
