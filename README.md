@@ -1,39 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain`](https://www.npmjs.com/package/create-onchain).
+# FindChain - Blockchain-Powered Lost & Found Platform
 
+A decentralized platform for registering devices, posting bounties, and connecting finders with owners using NFT technology on Base blockchain.
 
-## Getting Started
+## 🌐 Deployed Contract
 
-First, install dependencies:
+**Network**: Base Sepolia (Testnet)  
+**Contract Address**: `0xCcF255150E90a206EfCAebAC37a04C223232401b`  
+**Chain ID**: `84532`  
+**Block Explorer**: [View on BaseScan](https://sepolia.basescan.org/address/0xCcF255150E90a206EfCAebAC37a04C223232401b)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ installed
+- A wallet (MetaMask or Coinbase Wallet)
+- Base Sepolia testnet ETH ([Get from faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet))
+
+### Installation
+
+1. **Install dependencies:**
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
 ```
 
-Next, run the development server:
+2. **Set up environment variables:**
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_api_key_here
+NEXT_PUBLIC_PROJECT_NAME=FindChain
+```
+
+Get your OnchainKit API key from [Coinbase Developer Platform](https://portal.cdp.coinbase.com/).
+
+3. **Run the development server:**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. **Open your browser:**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Visit [http://localhost:3000](http://localhost:3000)
 
+## 📚 Documentation
 
-## Learn More
+- **[Quick Start Guide](./QUICK_START.md)** - Get up and running in 5 minutes
+- **[Setup Instructions](./SETUP_INSTRUCTIONS.md)** - Detailed setup guide
+- **[Integration Guide](./INTEGRATION_GUIDE.md)** - How to integrate the smart contract
+- **[Environment Template](./ENV_TEMPLATE.md)** - Environment variables reference
 
-To learn more about OnchainKit, see our [documentation](https://docs.base.org/onchainkit).
+## 🔗 Learn More
 
-To learn more about Next.js, see the [Next.js documentation](https://nextjs.org/docs).
+- [OnchainKit Documentation](https://docs.base.org/onchainkit)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Base Network](https://base.org)
+- [Wagmi Documentation](https://wagmi.sh)

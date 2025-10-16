@@ -17,6 +17,13 @@ export function shortenAddress(address: string, chars: number = 4): string {
   return `${address.slice(0, chars + 2)}...${address.slice(-chars)}`;
 }
 
+
+//Remove 0x from address
+export function remove0x(address: string): string {
+  if (!address) return "";
+  return address.replace("0x", "");
+}
+
 /**
  * Format a timestamp to a readable date
  */

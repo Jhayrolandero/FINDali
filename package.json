@@ -7,10 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "anvil": "anvil",
-    "deploy:local": "bash ./scripts/deploy-local.sh",
-    "foundry:install": "forge install foundry-rs/forge-std",
-    "check": "bash ./scripts/check-setup.sh"
+    "foundry:install": "forge install foundry-rs/forge-std"
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",

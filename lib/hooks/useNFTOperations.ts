@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseEther } from "viem";
 import { FINDCHAIN_CONTRACT_ADDRESS, FINDCHAIN_ABI } from "../contract";
@@ -147,6 +148,103 @@ export function useTokenIMEI(tokenId: bigint | undefined) {
     imei: data as string | undefined,
     isError,
     isLoading,
+  };
+}
+
+/**
+ * Hook to get all NFTs owned by a user with their IMEIs
+ * Uses events to fetch minted devices and checks current ownership
+ */
+export function useUserDevices(userAddress: `0x${string}` | undefined) {
+  const [devices, setDevices] = React.useState<Array<{
+    tokenId: bigint;
+    imei: string;
+  }>>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
+
+  const fetchDevices = React.useCallback(async () => {
+    if (!userAddress) return;
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { createPublicClient, http } = await import("viem");
+      const { baseSepolia } = await import("wagmi/chains");
+      
+      const publicClient = createPublicClient({
+        chain: baseSepolia,
+        transport: http(),
+      });
+
+      // Fetch all DeviceMinted events
+      const logs = await publicClient.getLogs({
+        address: FINDCHAIN_CONTRACT_ADDRESS,
+        event: {
+          type: "event",
+          name: "DeviceMinted",
+          inputs: [
+            { indexed: true, name: "tokenId", type: "uint256" },
+            { indexed: false, name: "imei", type: "string" },
+            { indexed: true, name: "owner", type: "address" },
+          ],
+        },
+        fromBlock: "earliest",
+        toBlock: "latest",
+      });
+
+      console.log("logs", logs);
+
+      // Check ownership for each minted token and get IMEI
+      const userDevices = await Promise.all(
+        logs.map(async (log) => {
+          const tokenId = log.args.tokenId!;
+          
+          // Check if user still owns this token
+          const owner = await publicClient.readContract({
+            address: FINDCHAIN_CONTRACT_ADDRESS,
+            abi: FINDCHAIN_ABI,
+            functionName: "ownerOf",
+            args: [tokenId],
+          });
+
+          if (owner?.toLowerCase() === userAddress.toLowerCase()) {
+            // Get IMEI
+            const imei = await publicClient.readContract({
+              address: FINDCHAIN_CONTRACT_ADDRESS,
+              abi: FINDCHAIN_ABI,
+              functionName: "getTokenIMEI",
+              args: [tokenId],
+            });
+
+            return {
+              tokenId,
+              imei: imei as string,
+            };
+          }
+          return null;
+        })
+      );
+
+      setDevices(userDevices.filter((d) => d !== null) as Array<{ tokenId: bigint; imei: string }>);
+    } catch (err) {
+      console.error("Error fetching user devices:", err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userAddress]);
+
+  React.useEffect(() => {
+    fetchDevices();
+  }, [fetchDevices]);
+
+  return {
+    devices,
+    isLoading,
+    error,
+    refetch: fetchDevices,
   };
 }
 

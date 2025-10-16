@@ -22,6 +22,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useDeviceBalance, useUserDevices } from "@/lib/hooks/useNFTOperations";
+import { useAccount } from "wagmi";
+import { remove0x } from "@/lib/helpers";
 
 // Mock data for user's devices
 const mockDevices = [
@@ -74,9 +77,14 @@ const mockDevices = [
 ];
 
 export default function MyDevicesPage() {
+  const { address } = useAccount();
+  const { devices } = useUserDevices(address!);
+
   const [selectedDevice, setSelectedDevice] = useState<
     (typeof mockDevices)[0] | null
   >(null);
+
+  console.log("devices", devices);
 
   const getStatusConfig = (status: string) => {
     switch (status) {
