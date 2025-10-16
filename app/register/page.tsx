@@ -15,18 +15,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Shield, Upload, X, Info, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import {
+  Shield,
+  Upload,
+  X,
+  Info,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAccount } from "wagmi";
 import { useMintDevice, useCheckIMEI } from "@/lib/hooks";
-import { validateIMEI, createProofHash, getBlockExplorerUrl } from "@/lib/helpers";
+import {
+  validateIMEI,
+  createProofHash,
+  getBlockExplorerUrl,
+} from "@/lib/helpers";
 
 export default function RegisterDevicePage() {
   const { address, isConnected } = useAccount();
   const [step, setStep] = useState(1);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  
+
   // Form data
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
@@ -37,25 +49,30 @@ export default function RegisterDevicePage() {
   const [imeiError, setImeiError] = useState("");
   const [isFetchingDeviceInfo, setIsFetchingDeviceInfo] = useState(false);
   const [deviceInfoError, setDeviceInfoError] = useState("");
-  
+
   // Contract hooks
-  const { mintDevice, isPending, isConfirming, isConfirmed, hash, error } = useMintDevice();
-  const { isRegistered, isLoading: checkingIMEI } = useCheckIMEI(imei.length === 15 ? imei : undefined);
+  const { mintDevice, isPending, isConfirming, isConfirmed, hash, error } =
+    useMintDevice();
+  const { isRegistered, isLoading: checkingIMEI } = useCheckIMEI(
+    imei.length === 15 ? imei : undefined
+  );
 
   // Fetch device info from IMEI API with debounce
   const fetchDeviceInfo = useCallback(async (imeiValue: string) => {
     if (imeiValue.length !== 15) return;
-    
+
     setIsFetchingDeviceInfo(true);
     setDeviceInfoError("");
 
     try {
       const response = await fetch(`/api/device-info?imei=${imeiValue}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 404) {
-          setDeviceInfoError("Device not found in database. Please fill details manually.");
+          setDeviceInfoError(
+            "Device not found in database. Please fill details manually."
+          );
         } else {
           setDeviceInfoError(errorData.error || "Failed to fetch device info");
         }
@@ -63,25 +80,35 @@ export default function RegisterDevicePage() {
       }
 
       const data = await response.json();
-      
+
       // Auto-fill form fields
       setBrand(data.brand || "");
       setModel(data.modelName || "");
-      
+
       // Try to guess category from model name
       const modelLower = (data.modelName || "").toLowerCase();
-      if (modelLower.includes("iphone") || modelLower.includes("galaxy") || modelLower.includes("pixel")) {
+      if (
+        modelLower.includes("iphone") ||
+        modelLower.includes("galaxy") ||
+        modelLower.includes("pixel")
+      ) {
         setCategory("phone");
-      } else if (modelLower.includes("macbook") || modelLower.includes("laptop") || modelLower.includes("thinkpad")) {
+      } else if (
+        modelLower.includes("macbook") ||
+        modelLower.includes("laptop") ||
+        modelLower.includes("thinkpad")
+      ) {
         setCategory("laptop");
       } else if (modelLower.includes("ipad") || modelLower.includes("tablet")) {
         setCategory("tablet");
       }
-      
+
       console.log("Auto-filled device info:", data);
     } catch (err) {
       console.error("Error fetching device info:", err);
-      setDeviceInfoError("Failed to fetch device info. Please fill details manually.");
+      setDeviceInfoError(
+        "Failed to fetch device info. Please fill details manually."
+      );
     } finally {
       setIsFetchingDeviceInfo(false);
     }
@@ -139,7 +166,7 @@ export default function RegisterDevicePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isConnected) {
       alert("Please connect your wallet first");
       return;
@@ -239,7 +266,7 @@ export default function RegisterDevicePage() {
               }}
               className="space-y-6"
             >
-              <div className="space-y-2 text-black">
+              <div className="space-y-2">
                 <Label htmlFor="imei">IMEI / Serial Number</Label>
                 <Input
                   id="imei"
@@ -247,7 +274,9 @@ export default function RegisterDevicePage() {
                   required
                   className="font-mono"
                   value={imei}
-                  onChange={(e) => setImei(e.target.value.replace(/\D/g, "").slice(0, 15))}
+                  onChange={(e) =>
+                    setImei(e.target.value.replace(/\D/g, "").slice(0, 15))
+                  }
                   maxLength={15}
                 />
                 {imeiError && (
@@ -260,24 +289,32 @@ export default function RegisterDevicePage() {
                   <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                     <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
                     <p className="text-muted-foreground">
-                      {checkingIMEI ? "Checking IMEI availability..." : "Fetching device information..."}
+                      {checkingIMEI
+                        ? "Checking IMEI availability..."
+                        : "Fetching device information..."}
                     </p>
                   </div>
                 )}
                 {deviceInfoError && (
                   <div className="flex items-start gap-2 rounded-lg bg-yellow-500/10 p-3 text-sm">
                     <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-600" />
-                    <p className="text-yellow-700 dark:text-yellow-500">{deviceInfoError}</p>
-                  </div>
-                )}
-                {!imeiError && !checkingIMEI && !isFetchingDeviceInfo && imei.length === 15 && (
-                  <div className="text-black flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-black" />
-                    <p>
-                      IMEI is available{brand && ` • Device information detected`}
+                    <p className="text-yellow-700 dark:text-yellow-500">
+                      {deviceInfoError}
                     </p>
                   </div>
                 )}
+                {!imeiError &&
+                  !checkingIMEI &&
+                  !isFetchingDeviceInfo &&
+                  imei.length === 15 && (
+                    <div className="flex items-start gap-2 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-sm">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
+                      <p className="text-green-700 dark:text-green-300">
+                        IMEI is available
+                        {brand && ` • Device information detected`}
+                      </p>
+                    </div>
+                  )}
                 <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                   <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   <p className="text-muted-foreground">
@@ -298,21 +335,31 @@ export default function RegisterDevicePage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     {category && (
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Category</p>
-                        <p className="text-base font-medium capitalize">{category}</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Category
+                        </p>
+                        <p className="text-base font-medium capitalize">
+                          {category}
+                        </p>
                       </div>
                     )}
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Brand</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Brand
+                      </p>
                       <p className="text-base font-medium">{brand}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Model</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Model
+                      </p>
                       <p className="text-base font-medium">{model}</p>
                     </div>
                     {color && (
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Color</p>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Color
+                        </p>
                         <p className="text-base font-medium">{color}</p>
                       </div>
                     )}
@@ -366,9 +413,9 @@ export default function RegisterDevicePage() {
                       </label>
                     )}
                   </div>
-                  <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm">
-                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-black" />
-                    <p className="text-muted-foreground">
+                  <div className="flex items-start gap-2 rounded-lg bg-accent/10 border border-accent/20 p-3 text-sm">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent" />
+                    <p className="text-foreground">
                       Upload photos of receipts, original packaging, or device
                       settings screens. These prove ownership and prevent
                       scammers.
@@ -381,12 +428,17 @@ export default function RegisterDevicePage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={!imei || imeiError !== "" || !isConnected || uploadedImages.length === 0}
+                disabled={
+                  !imei ||
+                  imeiError !== "" ||
+                  !isConnected ||
+                  uploadedImages.length === 0
+                }
               >
-                {!isConnected 
-                  ? "Connect Wallet to Continue" 
-                  : uploadedImages.length === 0 
-                  ? "Upload at least 1 proof image" 
+                {!isConnected
+                  ? "Connect Wallet to Continue"
+                  : uploadedImages.length === 0
+                  ? "Upload at least 1 proof image"
                   : "Continue to Minting"}
               </Button>
             </form>
@@ -404,29 +456,29 @@ export default function RegisterDevicePage() {
             </div>
 
             <div className="mb-6 space-y-4">
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Blockchain</span>
+              <div className="flex items-center justify-between rounded-lg bg-primary/10 border border-primary/20 p-4">
+                <span className="text-foreground">Blockchain</span>
                 <Badge className="gap-1 bg-primary text-primary-foreground">
                   <Shield className="h-3 w-3" />
                   Base (Ethereum L2)
                 </Badge>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Token Standard</span>
-                <span className="font-semibold">ERC-721</span>
+              <div className="flex items-center justify-between rounded-lg bg-accent/10 border border-accent/20 p-4">
+                <span className="text-foreground">Token Standard</span>
+                <span className="font-semibold text-foreground">ERC-721</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Estimated Gas Fee</span>
-                <span className="font-semibold">~$0.50</span>
+              <div className="flex items-center justify-between rounded-lg bg-secondary/10 border border-secondary/20 p-4">
+                <span className="text-foreground">Estimated Gas Fee</span>
+                <span className="font-semibold text-foreground">~$0.50</span>
               </div>
             </div>
 
             <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
                 <Shield className="h-5 w-5 text-primary" />
                 What You Get
               </h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-2 text-sm text-foreground">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   Cryptographic proof of ownership stored on blockchain
@@ -451,27 +503,33 @@ export default function RegisterDevicePage() {
                 <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm">
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
                   <div>
-                    <p className="font-semibold text-destructive">Error minting NFT</p>
+                    <p className="font-semibold text-destructive">
+                      Error minting NFT
+                    </p>
                     <p className="text-destructive/80">{error.message}</p>
                   </div>
                 </div>
               )}
-              
+
               {isPending && (
                 <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                   <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
-                  <p className="text-muted-foreground">Waiting for wallet confirmation...</p>
+                  <p className="text-muted-foreground">
+                    Waiting for wallet confirmation...
+                  </p>
                 </div>
               )}
-              
+
               {isConfirming && hash && (
                 <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                   <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
                   <div>
-                    <p className="text-muted-foreground">Transaction submitted! Waiting for confirmation...</p>
-                    <a 
-                      href={getBlockExplorerUrl(hash)} 
-                      target="_blank" 
+                    <p className="text-muted-foreground">
+                      Transaction submitted! Waiting for confirmation...
+                    </p>
+                    <a
+                      href={getBlockExplorerUrl(hash)}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >
@@ -529,16 +587,18 @@ export default function RegisterDevicePage() {
             </p>
 
             <div className="mb-8 space-y-3">
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Device</span>
-                <span className="font-semibold">{brand} {model}</span>
+              <div className="flex items-center justify-between rounded-lg bg-primary/10 border border-primary/20 p-4">
+                <span className="text-foreground">Device</span>
+                <span className="font-semibold text-foreground">
+                  {brand} {model}
+                </span>
               </div>
               {hash && (
-                <div className="flex flex-col gap-2 rounded-lg bg-secondary p-4">
-                  <span className="text-muted-foreground">Transaction Hash</span>
-                  <a 
-                    href={getBlockExplorerUrl(hash)} 
-                    target="_blank" 
+                <div className="flex flex-col gap-2 rounded-lg bg-accent/10 border border-accent/20 p-4">
+                  <span className="text-foreground">Transaction Hash</span>
+                  <a
+                    href={getBlockExplorerUrl(hash)}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="font-mono text-sm text-primary hover:underline break-all"
                   >
@@ -546,9 +606,11 @@ export default function RegisterDevicePage() {
                   </a>
                 </div>
               )}
-              <div className="flex items-center justify-between rounded-lg bg-secondary p-4">
-                <span className="text-muted-foreground">Blockchain</span>
-                <span className="font-semibold">Base Sepolia</span>
+              <div className="flex items-center justify-between rounded-lg bg-secondary/10 border border-secondary/20 p-4">
+                <span className="text-foreground">Blockchain</span>
+                <span className="font-semibold text-foreground">
+                  Base Sepolia
+                </span>
               </div>
             </div>
 

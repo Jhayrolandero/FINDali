@@ -194,11 +194,11 @@ export default function BrowseFoundPage() {
             return (
               <Card
                 key={item.id}
-                className="border-border bg-card p-6 transition-all hover:border-accent/50"
+                className="border-border bg-card p-4 transition-all hover:border-accent/50"
               >
-                <div className="flex flex-col gap-4 lg:flex-row">
+                <div className="flex flex-col gap-3 lg:flex-row">
                   {/* Item Image Placeholder */}
-                  <div className="flex h-48 w-full items-center justify-center rounded-lg bg-secondary lg:h-auto lg:w-48">
+                  <div className="flex h-40 w-full items-center justify-center rounded-lg bg-secondary lg:h-auto lg:w-40">
                     <img
                       src={`/.jpg?height=200&width=200&query=${item.brand} ${item.model} found item`}
                       alt={`${item.brand} ${item.model}`}
@@ -208,68 +208,99 @@ export default function BrowseFoundPage() {
 
                   {/* Item Details */}
                   <div className="flex-1">
-                    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <h3 className="text-2xl font-bold">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <h3 className="text-xl font-bold">
                             {item.brand} {item.model}
                           </h3>
-                          <Badge className="gap-1 bg-accent text-accent-foreground">
+                          <Badge className="gap-1 bg-accent text-accent-foreground text-xs">
                             <PackageOpen className="h-3 w-3" />
                             Found Item
                           </Badge>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
+                            <MapPin className="h-3 w-3" />
                             {item.location}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
+                            <Clock className="h-3 w-3" />
                             {item.foundDate}
                           </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="mb-1 flex items-center gap-2 text-2xl font-bold text-chart-4">
+                      {/* <div className="text-right">
+                        <div className="mb-1 flex items-center gap-2 text-2xl font-bold text-accent">
                           <Award className="h-6 w-6" />
                           {item.pointsReward}
                         </div>
                         <span className="text-xs text-muted-foreground">
                           Points Reward
                         </span>
-                      </div>
+                      </div> */}
                     </div>
 
-                    <p className="mb-4 text-muted-foreground">
+                    <p className="mb-3 text-sm text-muted-foreground">
                       {item.description}
                     </p>
 
-                    <div className="mb-4 flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          Finder:
-                        </span>
-                        <span className="font-mono text-sm">
-                          {item.finderENS || item.finderAddress}
-                        </span>
-                        <Badge className={trustLevel.color}>
-                          {trustLevel.label}
-                        </Badge>
+                    {/* Finder Profile Section - Social Media Style */}
+                    <div className="flex items-center gap-2 rounded-lg border border-border bg-card/50 p-2">
+                      {/* Profile Picture */}
+                      <div className="relative">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-sm font-bold text-primary">
+                          {(item.finderENS || item.finderAddress)
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                        {/* Trust Badge Overlay */}
+                        {item.finderReputation >= 80 && (
+                          <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent border-2 border-background">
+                            <Award className="h-2.5 w-2.5 text-accent-foreground" />
+                          </div>
+                        )}
                       </div>
-                      <Badge variant="outline" className="gap-1">
-                        <Award className="h-3 w-3" />
-                        {item.finderReturns} Successful Returns
-                      </Badge>
+
+                      {/* Finder Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-semibold text-foreground truncate">
+                            {item.finderENS || item.finderAddress}
+                          </span>
+                          <Badge
+                            className={`${trustLevel.color} text-xs px-1.5 py-0`}
+                          >
+                            {trustLevel.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-0.5">
+                            <Award className="h-2.5 w-2.5" />
+                            {item.finderReturns} Returns
+                          </span>
+                          <span>•</span>
+                          <span>{item.finderReputation}% Trust</span>
+                        </div>
+                      </div>
+
+                      {/* Contact Button */}
+                      <Button
+                        size="sm"
+                        className="gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90 h-8 text-xs px-3"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        Contact
+                      </Button>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    {/* <div className="flex flex-wrap gap-3">
                       <Button className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
                         <MessageSquare className="h-4 w-4" />
                         Contact Finder
                       </Button>
-                      <Button variant="outline">Claim This Item</Button>
-                    </div>
+                      {/* <Button variant="outline">Claim This Item</Button> */}
+                    {/* </div> */}
                   </div>
                 </div>
               </Card>

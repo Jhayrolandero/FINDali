@@ -27,6 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useUserDevicesWithMetadata } from "@/lib/hooks/useUserDevicesWithMetadata";
+import { useDeviceBounties } from "@/lib/hooks/useDeviceBounties";
 import { useAccount } from "wagmi";
 import type { DeviceMetadata } from "@/lib/api/types";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,11 @@ export default function MyDevicesPage() {
   const { address, isConnected } = useAccount();
   const { devices, totalCount, isLoading, error, refetch } =
     useUserDevicesWithMetadata(address);
+
+  // Get bounty statuses for all devices
+  const tokenIds = devices.map((d) => d.tokenId);
+  const { bountyStatuses, isLoading: bountiesLoading } =
+    useDeviceBounties(tokenIds);
 
   const [selectedDevice, setSelectedDevice] = useState<DeviceMetadata | null>(
     null
@@ -210,7 +216,15 @@ export default function MyDevicesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Bounties</p>
-                <p className="text-3xl font-bold">0 ETH</p>
+                <p className="text-3xl font-bold">
+                  {bountiesLoading
+                    ? "..."
+                    : Object.values(bountyStatuses)
+                        .filter((b) => b.hasActiveBounty)
+                        .reduce((sum, b) => sum + parseFloat(b.amount), 0)
+                        .toFixed(4)}{" "}
+                  ETH
+                </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10">
                 <AlertCircle className="h-6 w-6 text-destructive" />
@@ -241,10 +255,6 @@ export default function MyDevicesPage() {
                           <h3 className="text-2xl font-bold">
                             {device.brand} {device.modelName}
                           </h3>
-                          <Badge className={statusConfig.color}>
-                            <StatusIcon className="mr-1 h-3 w-3" />
-                            {statusConfig.label}
-                          </Badge>
                           <Badge variant="outline" className="gap-1">
                             <Shield className="h-3 w-3" />
                             NFT #{device.tokenId}
@@ -288,88 +298,99 @@ export default function MyDevicesPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      <Dialog
-                        open={showReportDialog}
-                        onOpenChange={setShowReportDialog}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            className="gap-2"
-                            onClick={() => {
-                              setSelectedDevice(device);
-                              setShowReportDialog(true);
-                            }}
-                          >
-                            <AlertCircle className="h-4 w-4" />
-                            Report Lost
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                          <DialogHeader>
-                            <DialogTitle>Report Lost Device</DialogTitle>
-                            <DialogDescription>
-                              NFT Token #{device.tokenId} ({device.brand}{" "}
-                              {device.modelName})
-                            </DialogDescription>
-                          </DialogHeader>
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              handleReportLost();
-                            }}
-                            className="space-y-4"
-                          >
-                            <Input
-                              placeholder="Last Known Location"
-                              value={reportLocation}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) => setReportLocation(e.target.value)}
-                              required
-                            />
-                            <Input
-                              placeholder="Details (IMEI, color, notes...)"
-                              value={reportDetails}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) => setReportDetails(e.target.value)}
-                              required
-                            />
-                            <Input
-                              type="number"
-                              step="0.0001"
-                              min="0.0005"
-                              max="10"
-                              placeholder="Bounty (ETH, 0.0005 - 10)"
-                              value={reportBounty}
-                              onChange={(
-                                e: React.ChangeEvent<HTMLInputElement>
-                              ) => setReportBounty(e.target.value)}
-                              required
-                            />
+                      {bountyStatuses[device.tokenId]?.hasActiveBounty ? (
+                        <Button
+                          variant="outline"
+                          className="gap-2 border-primary/50 bg-primary/10 text-primary cursor-not-allowed"
+                          disabled
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          Reported ({bountyStatuses[device.tokenId].amount} ETH)
+                        </Button>
+                      ) : (
+                        <Dialog
+                          open={showReportDialog}
+                          onOpenChange={setShowReportDialog}
+                        >
+                          <DialogTrigger asChild>
                             <Button
-                              type="submit"
-                              disabled={reportLoading}
-                              className="w-full"
+                              variant="destructive"
+                              className="gap-2"
+                              onClick={() => {
+                                setSelectedDevice(device);
+                                setShowReportDialog(true);
+                              }}
                             >
-                              {reportLoading
-                                ? "Submitting..."
-                                : "Report & Lock Bounty"}
+                              <AlertCircle className="h-4 w-4" />
+                              Report Lost
                             </Button>
-                            {reportError && (
-                              <div className="text-red-500 text-sm">
-                                {reportError}
-                              </div>
-                            )}
-                            {reportSuccess && (
-                              <div className="text-green-600 text-sm">
-                                Device reported successfully!
-                              </div>
-                            )}
-                          </form>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                              <DialogTitle>Report Lost Device</DialogTitle>
+                              <DialogDescription>
+                                NFT Token #{device.tokenId} ({device.brand}{" "}
+                                {device.modelName})
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                handleReportLost();
+                              }}
+                              className="space-y-4"
+                            >
+                              <Input
+                                placeholder="Last Known Location"
+                                value={reportLocation}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLInputElement>
+                                ) => setReportLocation(e.target.value)}
+                                required
+                              />
+                              <Input
+                                placeholder="Details (IMEI, color, notes...)"
+                                value={reportDetails}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLInputElement>
+                                ) => setReportDetails(e.target.value)}
+                                required
+                              />
+                              <Input
+                                type="number"
+                                step="0.0001"
+                                min="0.0005"
+                                max="10"
+                                placeholder="Bounty (ETH, 0.0005 - 10)"
+                                value={reportBounty}
+                                onChange={(
+                                  e: React.ChangeEvent<HTMLInputElement>
+                                ) => setReportBounty(e.target.value)}
+                                required
+                              />
+                              <Button
+                                type="submit"
+                                disabled={reportLoading}
+                                className="w-full"
+                              >
+                                {reportLoading
+                                  ? "Submitting..."
+                                  : "Report & Lock Bounty"}
+                              </Button>
+                              {reportError && (
+                                <div className="text-red-500 text-sm">
+                                  {reportError}
+                                </div>
+                              )}
+                              {reportSuccess && (
+                                <div className="text-green-600 text-sm">
+                                  Device reported successfully!
+                                </div>
+                              )}
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -393,51 +414,51 @@ export default function MyDevicesPage() {
                           {selectedDevice && (
                             <div className="space-y-4">
                               <div className="grid gap-3 text-sm">
-                                <div className="flex justify-between rounded-lg bg-secondary p-3">
+                                <div className="flex justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
                                   <span className="text-muted-foreground">
                                     Token ID
                                   </span>
-                                  <span className="font-mono font-bold">
+                                  <span className="font-mono font-bold text-primary">
                                     #{selectedDevice.tokenId}
                                   </span>
                                 </div>
-                                <div className="flex justify-between rounded-lg bg-secondary p-3">
+                                <div className="flex justify-between rounded-lg border border-accent/30 bg-accent/5 p-3">
                                   <span className="text-muted-foreground">
                                     Full Model Name
                                   </span>
-                                  <span className="font-semibold">
+                                  <span className="font-semibold text-foreground">
                                     {selectedDevice.modelName}
                                   </span>
                                 </div>
-                                <div className="flex justify-between rounded-lg bg-secondary p-3">
+                                <div className="flex justify-between rounded-lg border border-secondary/30 bg-secondary/5 p-3">
                                   <span className="text-muted-foreground">
                                     Model Number
                                   </span>
-                                  <span className="font-mono text-xs">
+                                  <span className="font-mono text-xs text-foreground">
                                     {selectedDevice.model}
                                   </span>
                                 </div>
-                                <div className="flex justify-between rounded-lg bg-secondary p-3">
+                                <div className="flex justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
                                   <span className="text-muted-foreground">
                                     Minted At
                                   </span>
-                                  <span className="font-semibold">
+                                  <span className="font-semibold text-foreground">
                                     {formatDate(selectedDevice.mintedAt)}
                                   </span>
                                 </div>
-                                <div className="flex justify-between rounded-lg bg-secondary p-3">
+                                <div className="flex justify-between rounded-lg border border-accent/30 bg-accent/5 p-3">
                                   <span className="text-muted-foreground">
                                     Block Number
                                   </span>
-                                  <span className="font-mono text-xs">
+                                  <span className="font-mono text-xs text-foreground">
                                     {selectedDevice.mintBlock}
                                   </span>
                                 </div>
-                                <div className="flex justify-between rounded-lg bg-secondary p-3">
+                                <div className="flex justify-between rounded-lg border border-secondary/30 bg-secondary/5 p-3">
                                   <span className="text-muted-foreground">
                                     Blockchain
                                   </span>
-                                  <span className="font-semibold">
+                                  <span className="font-semibold text-foreground">
                                     Base Sepolia (Testnet)
                                   </span>
                                 </div>

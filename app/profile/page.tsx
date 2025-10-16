@@ -475,7 +475,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm">
-                    <Package className="h-4 w-4 text-chart-4" />
+                    <Package className="h-4 w-4 text-secondary" />
                     <span className="text-muted-foreground">Items Posted</span>
                   </div>
                   <span className="font-bold">{userData.itemsPosted}</span>
