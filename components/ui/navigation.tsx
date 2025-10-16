@@ -10,6 +10,7 @@ import {
   Search,
   Smartphone,
   Trophy,
+  User,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -27,6 +28,7 @@ export function Navigation() {
     { href: "/register", label: "Register Device", icon: Package },
     { href: "/my-devices", label: "My Devices", icon: Smartphone },
     { href: "/my-points", label: "My Points", icon: Trophy },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
