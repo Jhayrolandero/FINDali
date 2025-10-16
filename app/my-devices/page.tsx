@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useWriteContract } from "wagmi";
+import { FINDCHAIN_CONTRACT_ADDRESS, FINDCHAIN_ABI } from "@/lib/contract";
+import { parseEther } from "viem";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,18 +29,60 @@ import {
 import { useUserDevicesWithMetadata } from "@/lib/hooks/useUserDevicesWithMetadata";
 import { useAccount } from "wagmi";
 import type { DeviceMetadata } from "@/lib/api/types";
+import { Input } from "@/components/ui/input";
 
 export default function MyDevicesPage() {
   const { address, isConnected } = useAccount();
-  const { devices, totalCount, isLoading, error, refetch } = useUserDevicesWithMetadata(address);
+  const { devices, totalCount, isLoading, error, refetch } =
+    useUserDevicesWithMetadata(address);
 
-  const [selectedDevice, setSelectedDevice] = useState<DeviceMetadata | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceMetadata | null>(
+    null
+  );
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportLocation, setReportLocation] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportBounty, setReportBounty] = useState("");
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState("");
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const { writeContractAsync } = useWriteContract();
+
+  const handleReportLost = async () => {
+    setReportLoading(true);
+    setReportError("");
+    setReportSuccess(false);
+    const bountyValue = parseFloat(reportBounty);
+    if (isNaN(bountyValue) || bountyValue < 0.0005 || bountyValue > 10) {
+      setReportError("Bounty must be between 0.0005 and 10 ETH");
+      setReportLoading(false);
+      return;
+    }
+    try {
+      await writeContractAsync({
+        address: FINDCHAIN_CONTRACT_ADDRESS as `0x${string}`,
+        abi: FINDCHAIN_ABI,
+        functionName: "createBounty",
+        args: [
+          selectedDevice ? BigInt(selectedDevice.tokenId) : 0n,
+          reportLocation,
+          reportDetails,
+        ],
+        value: parseEther(reportBounty),
+      });
+      setReportSuccess(true);
+      setShowReportDialog(false);
+    } catch (err: any) {
+      setReportError(err?.message || "Failed to report lost device");
+    }
+    setReportLoading(false);
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -95,8 +140,12 @@ export default function MyDevicesPage() {
                 <AlertCircle className="h-6 w-6 text-destructive" />
               </div>
             </div>
-            <h2 className="mb-2 text-center text-2xl font-bold">Error Loading Devices</h2>
-            <p className="mb-4 text-center text-muted-foreground">{error.message}</p>
+            <h2 className="mb-2 text-center text-2xl font-bold">
+              Error Loading Devices
+            </h2>
+            <p className="mb-4 text-center text-muted-foreground">
+              {error.message}
+            </p>
             <Button onClick={refetch} className="w-full">
               Try Again
             </Button>
@@ -149,7 +198,7 @@ export default function MyDevicesPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Device Brands</p>
                 <p className="text-3xl font-bold">
-                  {new Set(devices.map(d => d.brand)).size}
+                  {new Set(devices.map((d) => d.brand)).size}
                 </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
@@ -213,8 +262,12 @@ export default function MyDevicesPage() {
                         <span className="font-semibold">{device.brand}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Model Number:</span>{" "}
-                        <span className="font-semibold font-mono text-xs">{device.model}</span>
+                        <span className="text-muted-foreground">
+                          Model Number:
+                        </span>{" "}
+                        <span className="font-semibold font-mono text-xs">
+                          {device.model}
+                        </span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">
@@ -235,10 +288,88 @@ export default function MyDevicesPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      <Button variant="destructive" className="gap-2">
-                        <AlertCircle className="h-4 w-4" />
-                        Report Lost
-                      </Button>
+                      <Dialog
+                        open={showReportDialog}
+                        onOpenChange={setShowReportDialog}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            className="gap-2"
+                            onClick={() => {
+                              setSelectedDevice(device);
+                              setShowReportDialog(true);
+                            }}
+                          >
+                            <AlertCircle className="h-4 w-4" />
+                            Report Lost
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle>Report Lost Device</DialogTitle>
+                            <DialogDescription>
+                              NFT Token #{device.tokenId} ({device.brand}{" "}
+                              {device.modelName})
+                            </DialogDescription>
+                          </DialogHeader>
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleReportLost();
+                            }}
+                            className="space-y-4"
+                          >
+                            <Input
+                              placeholder="Last Known Location"
+                              value={reportLocation}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => setReportLocation(e.target.value)}
+                              required
+                            />
+                            <Input
+                              placeholder="Details (IMEI, color, notes...)"
+                              value={reportDetails}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => setReportDetails(e.target.value)}
+                              required
+                            />
+                            <Input
+                              type="number"
+                              step="0.0001"
+                              min="0.0005"
+                              max="10"
+                              placeholder="Bounty (ETH, 0.0005 - 10)"
+                              value={reportBounty}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => setReportBounty(e.target.value)}
+                              required
+                            />
+                            <Button
+                              type="submit"
+                              disabled={reportLoading}
+                              className="w-full"
+                            >
+                              {reportLoading
+                                ? "Submitting..."
+                                : "Report & Lock Bounty"}
+                            </Button>
+                            {reportError && (
+                              <div className="text-red-500 text-sm">
+                                {reportError}
+                              </div>
+                            )}
+                            {reportSuccess && (
+                              <div className="text-green-600 text-sm">
+                                Device reported successfully!
+                              </div>
+                            )}
+                          </form>
+                        </DialogContent>
+                      </Dialog>
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -315,7 +446,12 @@ export default function MyDevicesPage() {
                                 <Button
                                   className="flex-1 gap-2 bg-transparent"
                                   variant="outline"
-                                  onClick={() => window.open(`https://sepolia.basescan.org/token/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}?a=${selectedDevice.tokenId}`, '_blank')}
+                                  onClick={() =>
+                                    window.open(
+                                      `https://sepolia.basescan.org/token/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}?a=${selectedDevice.tokenId}`,
+                                      "_blank"
+                                    )
+                                  }
                                 >
                                   <ExternalLink className="h-4 w-4" />
                                   View on BaseScan
@@ -355,4 +491,3 @@ export default function MyDevicesPage() {
     </div>
   );
 }
-

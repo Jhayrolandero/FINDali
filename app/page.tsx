@@ -62,7 +62,7 @@ export default function page() {
             Revolutionary technology meets community-driven recovery
           </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-border bg-card p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
               <Shield className="h-6 w-6 text-primary" />
@@ -87,7 +87,7 @@ export default function page() {
             </p>
           </Card>
 
-          <Card className="border-border bg-card p-6">
+          {/* <Card className="border-border bg-card p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-chart-3/10">
               <MessageSquare className="h-6 w-6 text-chart-3" />
             </div>
@@ -96,9 +96,9 @@ export default function page() {
               End-to-end encrypted messaging via XMTP. Coordinate returns
               privately without central servers.
             </p>
-          </Card>
+          </Card> */}
 
-          <Card className="border-border bg-card p-6">
+          {/* <Card className="border-border bg-card p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-chart-4/10">
               <Award className="h-6 w-6 text-chart-4" />
             </div>
@@ -107,7 +107,7 @@ export default function page() {
               Build trust with wallet reputation scores. ENS names, account age,
               and successful returns create accountability.
             </p>
-          </Card>
+          </Card> */}
 
           <Card className="border-border bg-card p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-chart-5/10">
@@ -134,7 +134,7 @@ export default function page() {
       </section>
 
       {/* Stats Section */}
-      <section className="border-y border-border bg-secondary/30 py-16">
+      {/* <section className="border-y border-border bg-secondary/30 py-16">
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-4">
             <div className="text-center">
@@ -161,7 +161,7 @@ export default function page() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-20">

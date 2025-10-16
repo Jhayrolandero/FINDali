@@ -47,6 +47,8 @@ contract FindChain is ERC721, Ownable {
         address owner;
         uint256 createdAt;
         bool active;
+        string location;
+        string details;
     }
 
     struct Claim {
@@ -135,7 +137,7 @@ contract FindChain is ERC721, Ownable {
     }
 
     // Bounty functions
-    function createBounty(uint256 tokenId) public payable {
+    function createBounty(uint256 tokenId, string memory location, string memory details) public payable {
         if(_ownerOf(tokenId) != msg.sender) revert NotDeviceOwner();
         if(msg.value == 0) revert InvalidAmount();
         if(_bounties[tokenId].active) revert BountyAlreadyActive();
@@ -144,7 +146,9 @@ contract FindChain is ERC721, Ownable {
             amount: msg.value,
             owner: msg.sender,
             createdAt: block.timestamp,
-            active: true
+            active: true,
+            location: location,
+            details: details
         });
 
         emit BountyCreated(tokenId, msg.sender, msg.value);

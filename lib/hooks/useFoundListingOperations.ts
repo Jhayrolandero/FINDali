@@ -1,16 +1,81 @@
 "use client";
 
-import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useWriteContract,
+  useReadContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { parseEther } from "viem";
-import { FINDCHAIN_CONTRACT_ADDRESS, FINDCHAIN_ABI } from "../contract";
 
 /**
  * Hook for creating a found listing (finders post what they found)
  */
+import { useEffect, useState } from "react";
+// ...existing code...
+import { usePublicClient } from "wagmi";
+import { ethers } from "ethers";
+import { FINDCHAIN_CONTRACT_ADDRESS, FINDCHAIN_ABI } from "../contract";
+
+export interface FoundListing {
+  id: number;
+  deviceDescription: string;
+  proofHash: string;
+  finder: string;
+  submittedAt: number;
+  claimed: boolean;
+  claimedBy: string;
+  rewardAmount: string;
+}
+
+export function useFoundListings() {
+  const [listings, setListings] = useState<FoundListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const client = usePublicClient();
+
+  useEffect(() => {
+    async function fetchListings() {
+      setLoading(true);
+      try {
+        const provider = new ethers.JsonRpcProvider(
+          `https://eth-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+        );
+        const contract = new ethers.Contract(
+          FINDCHAIN_CONTRACT_ADDRESS,
+          FINDCHAIN_ABI,
+          provider
+        );
+        const total = await contract.getTotalFoundListings();
+        const promises = [];
+        for (let i = 0; i < total; i++) {
+          promises.push(contract.getFoundListing(i));
+        }
+        const results = await Promise.all(promises);
+        setListings(
+          results.map((listing: any, idx: number) => ({
+            id: idx,
+            deviceDescription: listing.deviceDescription,
+            proofHash: listing.proofHash,
+            finder: listing.finder,
+            submittedAt: Number(listing.submittedAt),
+            claimed: listing.claimed,
+            claimedBy: listing.claimedBy,
+            rewardAmount: listing.rewardAmount.toString(),
+          }))
+        );
+      } catch (err) {
+        setListings([]);
+      }
+      setLoading(false);
+    }
+    fetchListings();
+  }, [client]);
+
+  return { listings, loading };
+}
 export function useCreateFoundListing() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-  
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = 
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
   const createFoundListing = (deviceDescription: string, proofHash: string) => {
@@ -20,7 +85,7 @@ export function useCreateFoundListing() {
     if (!proofHash || proofHash.length === 0) {
       throw new Error("Proof hash is required");
     }
-    
+
     writeContract({
       address: FINDCHAIN_CONTRACT_ADDRESS,
       abi: FINDCHAIN_ABI,
@@ -44,8 +109,8 @@ export function useCreateFoundListing() {
  */
 export function useRemoveFoundListing() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-  
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = 
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
   const removeFoundListing = (listingId: bigint) => {
@@ -72,8 +137,8 @@ export function useRemoveFoundListing() {
  */
 export function useClaimFoundListing() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();
-  
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = 
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
   const claimFoundListing = (listingId: bigint, rewardInEth?: string) => {
@@ -146,4 +211,3 @@ export function useGetTotalFoundListings() {
     refetch,
   };
 }
-

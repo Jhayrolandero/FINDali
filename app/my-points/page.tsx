@@ -56,7 +56,7 @@ const levels = [
     name: "Legend",
     minFees: 5000,
     maxFees: Number.POSITIVE_INFINITY,
-    color: "text-chart-4",
+    color: "text-secondary",
   },
 ];
 
@@ -100,8 +100,6 @@ const feesHistory = [
 ];
 
 export default function MyPointsPage() {
-  const [kycStatus, setKycStatus] = useState(userData.kycStatus);
-
   const currentLevelData = levels.find((l) => l.name === userData.currentLevel);
   const nextLevelData = levels.find((l) => l.name === userData.nextLevel);
   const progressPercentage = nextLevelData
@@ -122,143 +120,16 @@ export default function MyPointsPage() {
 
   const trustLevel = getTrustLevel(userData.reputation);
 
-  const handleKycSubmit = () => {
-    // In a real app, this would trigger the KYC flow
-    setKycStatus("pending");
-    alert(
-      "KYC verification initiated. You will be redirected to the verification process."
-    );
-  };
-
-  const getKycStatusInfo = (status: string) => {
-    switch (status) {
-      case "verified":
-        return {
-          icon: <CheckCircle2 className="h-5 w-5" />,
-          label: "KYC Verified",
-          color:
-            "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
-          badge: "bg-green-500 text-white",
-        };
-      case "pending":
-        return {
-          icon: <AlertCircle className="h-5 w-5" />,
-          label: "KYC Pending",
-          color:
-            "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-          badge: "bg-yellow-500 text-white",
-        };
-      default:
-        return {
-          icon: <ShieldCheck className="h-5 w-5" />,
-          label: "KYC Not Verified",
-          color: "bg-muted/50 text-muted-foreground border-border",
-          badge: "bg-muted text-muted-foreground",
-        };
-    }
-  };
-
-  const kycInfo = getKycStatusInfo(kycStatus);
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold">My Find Fees & Profile</h1>
+          <h1 className="mb-2 text-4xl font-bold">Leaderboard & Profile</h1>
           <p className="text-lg text-muted-foreground">
             Track your finder fees and community reputation
           </p>
         </div>
-
-        {/* KYC Profile Section */}
-        <Card className={`mb-8 border p-6 ${kycInfo.color}`}>
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <div
-                className={`flex h-12 w-12 items-center justify-center rounded-full ${kycInfo.badge}`}
-              >
-                {kycInfo.icon}
-              </div>
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <h3 className="text-xl font-bold">KYC Verification Status</h3>
-                  <Badge className={kycInfo.badge}>{kycInfo.label}</Badge>
-                </div>
-                {kycStatus === "not_verified" && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Complete KYC verification to increase your trust level and
-                      unlock higher finder fees.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span>Enhanced Trust Score</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span>Higher Fee Multipliers</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span>Priority Support</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {kycStatus === "pending" && (
-                  <p className="text-sm text-muted-foreground">
-                    Your KYC verification is being processed. This usually takes
-                    24-48 hours. We'll notify you once it's complete.
-                  </p>
-                )}
-                {kycStatus === "verified" && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Your identity has been verified! You now have access to
-                      enhanced features and higher finder fees.
-                    </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <UserCheck className="h-4 w-4" />
-                      <span className="font-medium">
-                        Verified since{" "}
-                        {userData.kycSubmittedDate || "October 2024"}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              {kycStatus === "not_verified" && (
-                <Button
-                  onClick={handleKycSubmit}
-                  className="gap-2 whitespace-nowrap"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Start KYC Verification
-                </Button>
-              )}
-              {kycStatus === "pending" && (
-                <Button
-                  variant="outline"
-                  disabled
-                  className="gap-2 whitespace-nowrap"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  Verification Pending
-                </Button>
-              )}
-              {kycStatus === "verified" && (
-                <Badge className="gap-2 bg-green-500 px-4 py-2 text-white">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Verified Account
-                </Badge>
-              )}
-            </div>
-          </div>
-        </Card>
 
         {/* Profile Card */}
         <Card className="mb-8 border-border bg-card p-8">
@@ -322,7 +193,7 @@ export default function MyPointsPage() {
 
           {/* Stats Grid */}
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3 rounded-lg bg-secondary p-4">
+            <div className="flex items-center gap-3 rounded-lg bg-primary/10 p-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Trophy className="h-6 w-6 text-primary" />
               </div>
@@ -331,7 +202,7 @@ export default function MyPointsPage() {
                 <p className="text-sm text-muted-foreground">Total Find Fees</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-lg bg-secondary p-4">
+            <div className="flex items-center gap-3 rounded-lg bg-accent/10 p-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10">
                 <Package className="h-6 w-6 text-accent" />
               </div>
@@ -340,9 +211,9 @@ export default function MyPointsPage() {
                 <p className="text-sm text-muted-foreground">Items Returned</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-lg bg-secondary p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-chart-4/10">
-                <PackageOpen className="h-6 w-6 text-chart-4" />
+            <div className="flex items-center gap-3 rounded-lg bg-secondary/10 p-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
+                <PackageOpen className="h-6 w-6 text-secondary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{userData.itemsPosted}</p>
@@ -371,7 +242,7 @@ export default function MyPointsPage() {
                       ? "border-primary bg-primary/5"
                       : isPastLevel
                       ? "border-accent/30 bg-accent/5"
-                      : "border-border bg-secondary/30"
+                      : "border-border bg-muted/30"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -430,13 +301,15 @@ export default function MyPointsPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      entry.type === "return" ? "bg-accent/10" : "bg-chart-4/10"
+                      entry.type === "return"
+                        ? "bg-accent/10"
+                        : "bg-secondary/10"
                     }`}
                   >
                     {entry.type === "return" ? (
                       <Package className="h-5 w-5 text-accent" />
                     ) : (
-                      <PackageOpen className="h-5 w-5 text-chart-4" />
+                      <PackageOpen className="h-5 w-5 text-secondary" />
                     )}
                   </div>
                   <div>
@@ -474,8 +347,8 @@ export default function MyPointsPage() {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-chart-4/20">
-                <PackageOpen className="h-4 w-4 text-chart-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary/20">
+                <PackageOpen className="h-4 w-4 text-secondary" />
               </div>
               <div>
                 <p className="font-semibold">Post Found Items</p>

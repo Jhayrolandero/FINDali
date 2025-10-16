@@ -26,7 +26,11 @@ export const FINDCHAIN_ABI = [
   },
   // Bounty Functions
   {
-    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    inputs: [
+      { internalType: "uint256", name: "tokenId", type: "uint256" },
+      { internalType: "string", name: "location", type: "string" },
+      { internalType: "string", name: "details", type: "string" },
+    ],
     name: "createBounty",
     outputs: [],
     stateMutability: "payable",
@@ -147,6 +151,8 @@ export const FINDCHAIN_ABI = [
           { internalType: "address", name: "owner", type: "address" },
           { internalType: "uint256", name: "createdAt", type: "uint256" },
           { internalType: "bool", name: "active", type: "bool" },
+          { internalType: "string", name: "location", type: "string" },
+          { internalType: "string", name: "details", type: "string" },
         ],
         internalType: "struct FindChain.Bounty",
         name: "",

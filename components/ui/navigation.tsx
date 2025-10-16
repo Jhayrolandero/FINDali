@@ -27,12 +27,11 @@ export function Navigation() {
     { href: "/browse-found", label: "Browse Found", icon: PackageOpen },
     { href: "/register", label: "Register Device", icon: Package },
     { href: "/my-devices", label: "My Devices", icon: Smartphone },
-    { href: "/my-points", label: "My Points", icon: Trophy },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/my-points", label: "Leaderboard", icon: Trophy },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-lg shadow-primary/5">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -40,7 +39,7 @@ export function Navigation() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <Package className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold">FindChain</span>
+            <span className="text-xl font-bold">FINDali</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -51,10 +50,11 @@ export function Navigation() {
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
-                    variant={isActive ? "secondary" : "ghost"}
+                    variant="ghost"
                     className={cn(
-                      "gap-2",
-                      isActive && "bg-secondary text-secondary-foreground"
+                      "gap-2 relative cursor-pointer",
+                      isActive &&
+                        "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full after:shadow-[0_0_8px_rgba(0,229,255,0.5)] [text-shadow:0_0_12px_rgba(0,229,255,0.4)]"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -99,10 +99,11 @@ export function Navigation() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <Button
-                      variant={isActive ? "secondary" : "ghost"}
+                      variant="ghost"
                       className={cn(
-                        "w-full justify-start gap-2",
-                        isActive && "bg-secondary text-secondary-foreground"
+                        "w-full justify-start gap-2 relative cursor-pointer",
+                        isActive &&
+                          "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full [text-shadow:0_0_12px_rgba(0,229,255,0.4)]"
                       )}
                     >
                       <Icon className="h-4 w-4" />
