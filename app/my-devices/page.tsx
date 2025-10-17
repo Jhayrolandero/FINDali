@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWriteContract } from "wagmi";
 import { FINDCHAIN_CONTRACT_ADDRESS, FINDCHAIN_ABI } from "@/lib/contract";
 import { parseEther } from "viem";
@@ -16,6 +16,11 @@ import {
   Eye,
   Edit,
   Loader2,
+  User,
+  FileText,
+  Image as ImageIcon,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -28,9 +33,11 @@ import {
 } from "@/components/ui/dialog";
 import { useUserDevicesWithMetadata } from "@/lib/hooks/useUserDevicesWithMetadata";
 import { useDeviceBounties } from "@/lib/hooks/useDeviceBounties";
+import { useUserBountyClaims } from "@/lib/hooks/useBountyClaims";
 import { useAccount } from "wagmi";
 import type { DeviceMetadata } from "@/lib/api/types";
 import { Input } from "@/components/ui/input";
+import { fetchClaimFromIPFS } from "@/lib/api/ipfs";
 
 export default function MyDevicesPage() {
   const { address, isConnected } = useAccount();
@@ -42,6 +49,56 @@ export default function MyDevicesPage() {
   const { bountyStatuses, isLoading: bountiesLoading } =
     useDeviceBounties(tokenIds);
 
+  // Get claims for all bounties - explicitly convert to number array
+  const activeBountyTokenIds = tokenIds
+    .filter((id) => bountyStatuses[id]?.hasActiveBounty)
+    .map((id) => Number(id)) as number[];
+  const { claimsByToken, loading: claimsLoading } =
+    useUserBountyClaims(activeBountyTokenIds);
+
+  const [claimData, setClaimData] = useState<
+    Record<
+      number,
+      {
+        image: string;
+        imageUrl: string;
+        description: string;
+        timestamp: number;
+      }
+    >
+  >({});
+
+  // Fetch IPFS data for claims
+  useEffect(() => {
+    async function fetchClaimData() {
+      const newClaimData: typeof claimData = {};
+
+      for (const tokenIdStr in claimsByToken) {
+        const tokenId = Number(tokenIdStr);
+        const claims = claimsByToken[tokenId];
+        if (!claims) continue;
+        
+        for (const claim of claims) {
+          try {
+            const data = await fetchClaimFromIPFS(claim.proofHash);
+            newClaimData[claim.claimId] = data;
+          } catch (err) {
+            console.error(
+              `Error fetching claim data for claim ${claim.claimId}:`,
+              err
+            );
+          }
+        }
+      }
+
+      setClaimData(newClaimData);
+    }
+
+    if (Object.keys(claimsByToken).length > 0) {
+      fetchClaimData();
+    }
+  }, [claimsByToken]);
+
   const [selectedDevice, setSelectedDevice] = useState<DeviceMetadata | null>(
     null
   );
@@ -52,25 +109,67 @@ export default function MyDevicesPage() {
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
   const [reportSuccess, setReportSuccess] = useState(false);
+  const [confirmingClaim, setConfirmingClaim] = useState<number | null>(null);
+  const [rejectingClaim, setRejectingClaim] = useState<number | null>(null);
   const { writeContractAsync } = useWriteContract();
+
+  const handleConfirmClaim = async (claimId: number) => {
+    setConfirmingClaim(claimId);
+    try {
+      await writeContractAsync({
+        address: FINDCHAIN_CONTRACT_ADDRESS as `0x${string}`,
+        abi: FINDCHAIN_ABI,
+        functionName: "confirmClaim",
+        args: [BigInt(claimId)],
+      });
+      // Refresh data
+      refetch();
+    } catch (err: any) {
+      console.error("Error confirming claim:", err);
+      alert(err?.message || "Failed to confirm claim");
+    } finally {
+      setConfirmingClaim(null);
+    }
+  };
+
+  const handleRejectClaim = async (claimId: number) => {
+    setRejectingClaim(claimId);
+    try {
+      await writeContractAsync({
+        address: FINDCHAIN_CONTRACT_ADDRESS as `0x${string}`,
+        abi: FINDCHAIN_ABI,
+        functionName: "rejectClaim",
+        args: [BigInt(claimId)],
+      });
+      // Refresh data
+      refetch();
+    } catch (err: any) {
+      console.error("Error rejecting claim:", err);
+      alert(err?.message || "Failed to reject claim");
+    } finally {
+      setRejectingClaim(null);
+    }
+  };
 
   const handleReportLost = async () => {
     setReportLoading(true);
     setReportError("");
     setReportSuccess(false);
     const bountyValue = parseFloat(reportBounty);
-    if (isNaN(bountyValue) || bountyValue < 0.000005 || bountyValue > 10) {
+    const minBounty = 0.000005;
+    if (isNaN(bountyValue) || bountyValue < minBounty || bountyValue > 10) {
       setReportError("Bounty must be between 0.000005 and 10 ETH");
       setReportLoading(false);
       return;
     }
     try {
+      const tokenIdBigInt = selectedDevice ? BigInt(selectedDevice.tokenId) : BigInt(0);
       await writeContractAsync({
         address: FINDCHAIN_CONTRACT_ADDRESS as `0x${string}`,
         abi: FINDCHAIN_ABI,
         functionName: "createBounty",
         args: [
-          selectedDevice ? BigInt(selectedDevice.tokenId) : 0n,
+          tokenIdBigInt,
           reportLocation,
           reportDetails,
         ],
@@ -296,6 +395,138 @@ export default function MyDevicesPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Claims Section - only show if there are claims */}
+                    {bountyStatuses[device.tokenId]?.hasActiveBounty &&
+                      claimsByToken[Number(device.tokenId)]?.length > 0 && (
+                        <div className="mt-4 border-t border-border pt-4">
+                          <h4 className="mb-3 text-sm font-semibold flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-primary" />
+                            Claims Submitted ({claimsByToken[Number(device.tokenId)]?.length || 0})
+                          </h4>
+                          <div className="space-y-3">
+                            {claimsByToken[Number(device.tokenId)]?.map((claim: any) => {
+                              const data = claimData[claim.claimId];
+                              return (
+                                <Card
+                                  key={claim.claimId}
+                                  className="border-border bg-secondary/20 p-4"
+                                >
+                                  <div className="flex flex-col gap-3">
+                                    {/* Claim Header */}
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
+                                          {claim.finder.slice(2, 4).toUpperCase()}
+                                        </div>
+                                        <div>
+                                          <Link
+                                            href={`/user-profile/${claim.finder}`}
+                                            className="text-sm font-medium hover:text-primary transition-colors"
+                                          >
+                                            {claim.finder.slice(0, 6)}...
+                                            {claim.finder.slice(-4)}
+                                          </Link>
+                                          <p className="text-xs text-muted-foreground">
+                                            {new Date(
+                                              claim.submittedAt * 1000
+                                            ).toLocaleDateString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {claim.confirmed && (
+                                        <Badge className="bg-accent text-accent-foreground">
+                                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                                          Confirmed
+                                        </Badge>
+                                      )}
+                                      {claim.rejected && (
+                                        <Badge variant="destructive">
+                                          <XCircle className="mr-1 h-3 w-3" />
+                                          Rejected
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    {/* Claim Content */}
+                                    {data ? (
+                                      <div className="space-y-2">
+                                        {/* Image */}
+                                        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                                          <img
+                                            src={data.imageUrl}
+                                            alt="Claim proof"
+                                            className="h-full w-full object-cover"
+                                          />
+                                        </div>
+                                        {/* Description */}
+                                        <div>
+                                          <p className="text-xs font-semibold text-muted-foreground mb-1">
+                                            Description
+                                          </p>
+                                          <p className="text-sm">{data.description}</p>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Loading claim data...
+                                      </div>
+                                    )}
+
+                                    {/* Action Buttons */}
+                                    {!claim.confirmed && !claim.rejected && (
+                                      <div className="flex gap-2">
+                                        <Button
+                                          size="sm"
+                                          className="flex-1 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90"
+                                          onClick={() =>
+                                            handleConfirmClaim(claim.claimId)
+                                          }
+                                          disabled={confirmingClaim === claim.claimId}
+                                        >
+                                          {confirmingClaim === claim.claimId ? (
+                                            <>
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                              Confirming...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <CheckCircle2 className="h-3.5 w-3.5" />
+                                              Confirm & Pay
+                                            </>
+                                          )}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex-1 gap-1.5"
+                                          onClick={() =>
+                                            handleRejectClaim(claim.claimId)
+                                          }
+                                          disabled={rejectingClaim === claim.claimId}
+                                        >
+                                          {rejectingClaim === claim.claimId ? (
+                                            <>
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                              Rejecting...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <XCircle className="h-3.5 w-3.5" />
+                                              Reject
+                                            </>
+                                          )}
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                     <div className="flex flex-wrap gap-3">
                       {bountyStatuses[device.tokenId]?.hasActiveBounty ? (
