@@ -26,10 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className={`${inter.variable} ${sourceCodePro.variable}`}>
         <RootProvider>
           <Navigation />
+          <div className="mt-8 h-4" />
           {children}
         </RootProvider>
       </body>

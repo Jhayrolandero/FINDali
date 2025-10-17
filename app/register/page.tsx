@@ -9,13 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Shield,
   Upload,
   X,
@@ -49,6 +42,9 @@ export default function RegisterDevicePage() {
   const [imeiError, setImeiError] = useState("");
   const [isFetchingDeviceInfo, setIsFetchingDeviceInfo] = useState(false);
   const [deviceInfoError, setDeviceInfoError] = useState("");
+  const [isUploadingToIPFS, setIsUploadingToIPFS] = useState(false);
+  const [ipfsError, setIpfsError] = useState("");
+  const [ipfsHash, setIpfsHash] = useState("");
 
   // Contract hooks
   const { mintDevice, isPending, isConfirming, isConfirmed, hash, error } =
@@ -178,17 +174,48 @@ export default function RegisterDevicePage() {
     }
 
     try {
-      // Mint the device NFT
+      // Step 1: Upload metadata and images to IPFS
+      setIsUploadingToIPFS(true);
+      setIpfsError("");
+
+      const formData = new FormData();
+      
+      // Append description
+      formData.append("description", description);
+      
+      // Append all uploaded images (using "file" or "files" as the field name)
+      uploadedFiles.forEach((file) => {
+        formData.append("file", file);
+      });
+
+      const ipfsResponse = await fetch("http://findchain.testdns.fun/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!ipfsResponse.ok) {
+        const errorData = await ipfsResponse.json();
+        throw new Error(errorData.error || "Failed to upload to IPFS");
+      }
+
+      const ipfsData = await ipfsResponse.json();
+      setIpfsHash(ipfsData.hash || ipfsData.ipfsHash || ipfsData.cid || "");
+      setIsUploadingToIPFS(false);
+
+      console.log("IPFS hash:", ipfsHash);
+      // Step 2: Mint the device NFT with IPFS hash
       mintDevice(imei);
     } catch (err) {
-      console.error("Error minting device:", err);
-      alert(err instanceof Error ? err.message : "Failed to mint device NFT");
+      console.error("Error during registration:", err);
+      setIsUploadingToIPFS(false);
+      setIpfsError(err instanceof Error ? err.message : "Failed to upload metadata");
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        <p>IPFS HASH: {ipfsHash}</p>
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-bold">Register Your Device</h1>
@@ -499,6 +526,18 @@ export default function RegisterDevicePage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {ipfsError && (
+                <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                  <div>
+                    <p className="font-semibold text-destructive">
+                      IPFS Upload Error
+                    </p>
+                    <p className="text-destructive/80">{ipfsError}</p>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm">
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
@@ -511,7 +550,30 @@ export default function RegisterDevicePage() {
                 </div>
               )}
 
-              {isPending && (
+              {isUploadingToIPFS && (
+                <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
+                  <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
+                  <p className="text-muted-foreground">
+                    Uploading metadata and images to IPFS...
+                  </p>
+                </div>
+              )}
+
+              {ipfsHash && !isUploadingToIPFS && (
+                <div className="flex items-start gap-2 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-sm">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
+                  <div>
+                    <p className="text-green-700 dark:text-green-300 font-semibold">
+                      Uploaded to IPFS successfully
+                    </p>
+                    <p className="text-green-600/80 dark:text-green-400/80 font-mono text-xs break-all">
+                      {ipfsHash}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isPending && !isUploadingToIPFS && (
                 <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm">
                   <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary animate-spin" />
                   <p className="text-muted-foreground">
@@ -543,9 +605,14 @@ export default function RegisterDevicePage() {
                 type="submit"
                 size="lg"
                 className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isPending || isConfirming}
+                disabled={isPending || isConfirming || isUploadingToIPFS}
               >
-                {isPending || isConfirming ? (
+                {isUploadingToIPFS ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Uploading to IPFS...
+                  </>
+                ) : isPending || isConfirming ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
                     {isPending ? "Confirm in Wallet..." : "Minting NFT..."}
@@ -563,7 +630,7 @@ export default function RegisterDevicePage() {
                 size="lg"
                 className="w-full bg-transparent"
                 onClick={() => setStep(1)}
-                disabled={isPending || isConfirming}
+                disabled={isPending || isConfirming || isUploadingToIPFS}
               >
                 Back to Edit
               </Button>
@@ -636,6 +703,8 @@ export default function RegisterDevicePage() {
                   setDescription("");
                   setUploadedImages([]);
                   setUploadedFiles([]);
+                  setIpfsHash("");
+                  setIpfsError("");
                 }}
               >
                 Register Another Device

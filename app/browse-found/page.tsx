@@ -153,13 +153,12 @@ export default function BrowseFoundPage() {
         <div className="mb-6">
           <h1 className="mb-2 text-4xl font-bold">Browse Found Items</h1>
           <p className="text-lg text-muted-foreground">
-            Community members have found these items. Claim yours and help
-            finders earn points.
+            Community members have found these items.
           </p>
         </div>
 
         {/* Info Banner */}
-        <Card className="mx-auto mb-6 max-w-2xl border-primary/20 bg-primary/5 p-4">
+        {/* <Card className="mx-auto mb-6 max-w-2xl border-primary/20 bg-primary/5 p-4">
           <div className="flex items-start gap-3">
             <Award className="mt-0.5 h-5 w-5 text-primary" />
             <div>
@@ -171,7 +170,7 @@ export default function BrowseFoundPage() {
               </p>
             </div>
           </div>
-        </Card>
+        </Card> */}
 
         {/* Search and Filters */}
         <div className="mx-auto mb-6 flex max-w-2xl flex-col gap-4 md:flex-row">

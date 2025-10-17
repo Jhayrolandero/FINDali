@@ -59,8 +59,8 @@ export default function MyDevicesPage() {
     setReportError("");
     setReportSuccess(false);
     const bountyValue = parseFloat(reportBounty);
-    if (isNaN(bountyValue) || bountyValue < 0.0005 || bountyValue > 10) {
-      setReportError("Bounty must be between 0.0005 and 10 ETH");
+    if (isNaN(bountyValue) || bountyValue < 0.000005 || bountyValue > 10) {
+      setReportError("Bounty must be between 0.000005 and 10 ETH");
       setReportLoading(false);
       return;
     }
@@ -359,9 +359,9 @@ export default function MyDevicesPage() {
                               <Input
                                 type="number"
                                 step="0.0001"
-                                min="0.0005"
+                                min="0.000005"
                                 max="10"
-                                placeholder="Bounty (ETH, 0.0005 - 10)"
+                                placeholder="Bounty (ETH, 0.000005 - 10)"
                                 value={reportBounty}
                                 onChange={(
                                   e: React.ChangeEvent<HTMLInputElement>

@@ -58,7 +58,7 @@ export default function BrowseLostPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("priority");
-  const [useBlockchain, setUseBlockchain] = useState(false);
+  const [useBlockchain, setUseBlockchain] = useState(true);
   const { listings, loading: listingsLoading } = useFoundListings();
   const { bounties, loading: bountiesLoading } = useBounties();
 
@@ -113,9 +113,9 @@ export default function BrowseLostPage() {
             Help reunite owners with their devices. NFT-verified listings appear
             first.
           </p>
-          <Button className="mt-4" onClick={() => setUseBlockchain((v) => !v)}>
+          {/* <Button className="mt-4" onClick={() => setUseBlockchain((v) => !v)}>
             {useBlockchain ? "Show Mock Data" : "Show Blockchain Records"}
-          </Button>
+          </Button> */}
         </div>
 
         {/* Search and Filters */}

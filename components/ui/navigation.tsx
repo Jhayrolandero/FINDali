@@ -27,7 +27,7 @@ export function Navigation() {
     { href: "/browse-found", label: "Browse Found", icon: PackageOpen },
     { href: "/register", label: "Register Device", icon: Package },
     { href: "/my-devices", label: "My Devices", icon: Smartphone },
-    { href: "/my-points", label: "Leaderboard", icon: Trophy },
+    // { href: "/my-points", label: "Leaderboard", icon: Trophy },
   ];
 
   return (
